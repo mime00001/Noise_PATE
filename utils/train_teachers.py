@@ -63,12 +63,13 @@ def train_teacher(target_nw, train_loader, valid_loader, n_epochs, lr, weight_de
             print('Saving teacher...')
             torch.save(target_nw, "/disk2/michel/teacher.model")
             valid_loss_prev = args[-2]
+            break
 
     return [list(i) for i in zip(*metrics)]  # train_loss, train_acc, valid_loss, valid_acc
 
 
 @misc.log_experiment
-def util_train_teacher(dataset_name, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', **kwargs):
+def util_train_teachers(dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', **kwargs):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(dataset_name)
     # override
@@ -113,4 +114,4 @@ def util_train_teacher(dataset_name, n_epochs, lr=1e-3, weight_decay=0, verbose=
 
 
 if __name__ == '__main__':
-    fire.Fire(util_train_teacher)
+    fire.Fire(util_train_teachers)

@@ -36,8 +36,12 @@ def getDataloaders(trainset, testset, valid_size, batch_size, num_workers):
 # Datasets
 ################################################################
 
-def get_CIFAR10(batch_size, valid_size=0.2):
+def get_CIFAR10(batch_size, teacher_id, nb_teachers, valid_size=0.2):
     num_workers = 4
+    
+    assert int(teacher_id) < int(nb_teachers)
+    
+
 
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
@@ -53,5 +57,17 @@ def get_CIFAR10(batch_size, valid_size=0.2):
 
     trainset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train)
     testset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    
+    batch_len = int(len(trainset) / nb_teachers)
+    
+    assert batch_len > batch_size
+    
+    start = teacher_id * batch_len
+    end = (teacher_id+1) * batch_len
+    
+    partition_train = trainset[start:end]
+    partition_test = testset[start:end]
 
-    return getDataloaders(trainset, testset, 0.0, batch_size, num_workers)  # train_loader, valid_loader, test_loader
+    return getDataloaders(partition_train, partition_test, 0.0, batch_size, num_workers)  # train_loader, valid_loader, test_loader
+
+

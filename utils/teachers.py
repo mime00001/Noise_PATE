@@ -1,0 +1,94 @@
+import os
+import fire
+import numpy as np
+import matplotlib.pyplot as plt
+
+import torch
+import torchvision
+import torch.nn as nn
+from torch.optim import Adam, SGD
+import torch.nn.functional as F
+
+import models
+import datasets
+import conventions
+from utils import misc
+
+LOG_DIR = "/disk2/michel/"
+
+def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device):
+    target_nw.train()
+    train_loss = 0.0
+    accs = []
+    for data, target in train_loader:
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        output = target_nw(data)
+        loss = criterion(output, target)
+        loss.backward()
+        optimizer.step()
+        train_loss += loss.item()
+        accs.append(misc.accuracy_metric(output.detach(), target))
+    train_acc = np.mean(accs)
+    
+    target_nw.eval()
+    valid_loss = 0.0
+    accs = []
+    for data, target in valid_loader:
+        data, target = data.to(device), target.to(device)
+        output = target_nw(data)
+        loss = criterion(output, target)
+        valid_loss += loss.item()
+        accs.append(misc.accuracy_metric(output.detach(), target))
+    valid_acc = np.mean(accs)
+
+    scheduler.step(valid_loss)
+    
+    return train_loss/len(train_loader), train_acc, valid_loss/len(valid_loader), valid_acc
+
+
+
+def train_teacher(teacher_nw, teacher_id, nb_teachers, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR):
+    criterion = nn.CrossEntropyLoss(reduction="mean")
+    optimizer = Adam(teacher_nw.parameters(), lr=lr)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
+    metrics = []
+    for epoch in range(1, n_epochs+1):
+        args = train_one_epoch(teacher_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device)
+        if verbose:
+            print("Epoch: {} \tTraining Loss: {:.4f} \tTraining Accuracy: {:.4f} \tValidation Loss: {:.4f} \tValidation Accuracy: {:.4f}".format(epoch, *args))
+        metrics.append(args)
+        
+        if args[1]>0.99 and save:
+            print("Saving teacher {}...".format(teacher_id))
+            torch.save(teacher_nw, "/disk2/michel/teacher/{}".format(teacher_id))
+            break
+        
+    return [list(i) for i in zip(*metrics)]
+
+@misc.log_experiment
+def util_train_teachers(dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', **kwargs):
+    device = misc.get_device()
+    experiment_config = conventions.resolve_dataset(dataset_name)
+    # override
+    for k, v in kwargs.items():
+        experiment_config[k] = v
+    print('Experiment Configuration:')
+    print(experiment_config)
+
+    os.makedirs('/disk2/michel/data', exist_ok=True)
+    os.makedirs('/disk2/michel/Pretrained_NW', exist_ok=True)
+    
+    for teacher_id in range(nb_teachers):
+        train_loader, _, valid_loader = eval("datasets.get_{}({}, {}, {})".format(
+            dataset_name,
+            experiment_config['batch_size'],
+            teacher_id,
+            nb_teachers
+        ))
+        teacher_model = model = eval("models.{}.Target_Net({}, {})".format(
+            experiment_config['model_teacher'],
+            experiment_config['inputs'],
+            experiment_config['code_dim']
+        )).to(device)
+        metrics = train_teacher(teacher_model, teacher_id, nb_teachers,  train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR)
