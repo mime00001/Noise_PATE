@@ -5,3 +5,4 @@ torchvision
 fire
 absl-py
 scipy
+pandas
