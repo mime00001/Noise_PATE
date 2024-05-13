@@ -16,6 +16,8 @@ def resolve_dataset(dataset_name):
         experiment_config['batch_size'] = 256
     return experiment_config
 
+    #TODO MNIST, noise_CIFAR10, noise_MNIST
+
 
 def resolve_teacher_name(experiment_config):
     model_name = "teacher_"

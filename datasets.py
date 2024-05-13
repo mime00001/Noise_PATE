@@ -71,3 +71,6 @@ def get_CIFAR10(batch_size, teacher_id, nb_teachers, valid_size=0.2):
     return getDataloaders(partition_train, partition_test, 0.0, batch_size, num_workers)  # train_loader, valid_loader, test_loader
 
 
+#TODO get_noise_CIFAR10(...)
+#TODO get_MNIST(...)
+#TODO get_noise_MNIST(...)

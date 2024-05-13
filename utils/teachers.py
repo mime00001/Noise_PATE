@@ -59,11 +59,6 @@ def train_teacher(teacher_nw, teacher_id, nb_teachers, train_loader, valid_loade
             print("Epoch: {} \tTraining Loss: {:.4f} \tTraining Accuracy: {:.4f} \tValidation Loss: {:.4f} \tValidation Accuracy: {:.4f}".format(epoch, *args))
         metrics.append(args)
         
-        if args[1]>0.99 and save:
-            print("Saving teacher {}...".format(teacher_id))
-            torch.save(teacher_nw, "/disk2/michel/teacher/{}".format(teacher_id))
-            break
-        
     return [list(i) for i in zip(*metrics)]
 
 @misc.log_experiment
@@ -77,7 +72,7 @@ def util_train_teachers(dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_
     print(experiment_config)
 
     os.makedirs('/disk2/michel/data', exist_ok=True)
-    os.makedirs('/disk2/michel/Pretrained_NW', exist_ok=True)
+    os.makedirs('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), exist_ok=True)
     
     for teacher_id in range(nb_teachers):
         train_loader, _, valid_loader = eval("datasets.get_{}({}, {}, {})".format(
@@ -95,7 +90,7 @@ def util_train_teachers(dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_
         
         model_name = conventions.resolve_teacher_name(experiment_config)
         model_name+="_{}".format(teacher_id)
-        torch.save(model, os.path.join('/disk2/michel/Pretrained_NW', model_name))
+        torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), model_name))
         
         plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
         plt.plot(range(1, len(metrics[3])+1), metrics[3], label="Valid Accuracy")
@@ -123,7 +118,7 @@ def train_specific_teacher(teacher_id, dataset_name, n_epochs, nb_teachers=50, l
     print(experiment_config)
 
     os.makedirs('/disk2/michel/data', exist_ok=True)
-    os.makedirs('/disk2/michel/Pretrained_NW', exist_ok=True)
+    os.makedirs('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), exist_ok=True)
     train_loader, _, valid_loader = eval("datasets.get_{}({}, {}, {})".format(
             dataset_name,
             experiment_config['batch_size'],
@@ -139,7 +134,7 @@ def train_specific_teacher(teacher_id, dataset_name, n_epochs, nb_teachers=50, l
     
     model_name = conventions.resolve_teacher_name(experiment_config)
     model_name+="_{}".format(teacher_id)
-    torch.save(model, os.path.join('/disk2/michel/Pretrained_NW', model_name))
+    torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), model_name))
     
 if __name__ == '__main__':
     fire.Fire(util_train_teachers)
