@@ -60,7 +60,7 @@ def distill_using_data(teacher_nw, student_nw, train_loader, valid_loader, n_epo
     return [list(i) for i in zip(*metrics)]  # train_loss, valid_loss, valid_acc
 
 
-def distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_epochs, len_batch, lr, verbose, device, save, LOG_DIR):
+def distill_using_noise(teacher_nw, student_nw, valid_loader, n_epochs, len_batch, lr, verbose, device, save, LOG_DIR):
     print("\nDistillation using Gaussian noise..")
     optimizer = Adam(student_nw.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
@@ -140,7 +140,7 @@ def experiment_distil_gaussian(dataset_name, n_epochs_gaussian, n_epochs_data, l
         experiment_config['code_dim']
     )).to(device)
 
-    metrics = distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_epochs_gaussian, len_batch, lr, verbose, device, save, LOG_DIR)
+    metrics = distill_using_noise(teacher_nw, student_nw, valid_loader, n_epochs_gaussian, len_batch, lr, verbose, device, save, LOG_DIR)
     plt.plot(range(1, len(metrics[2])+1), metrics[2], label="Accuracy Noise")
 
     if compare:

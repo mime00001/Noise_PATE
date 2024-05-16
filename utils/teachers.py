@@ -12,6 +12,7 @@ import torch.nn.functional as F
 import models
 import datasets
 import conventions
+import models.resnet9
 from utils import misc
 
 LOG_DIR = "/disk2/michel/"
@@ -42,16 +43,21 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
         accs.append(misc.accuracy_metric(output.detach(), target))
     valid_acc = np.mean(accs)
 
-    scheduler.step(valid_loss)
+    scheduler.step(train_loss/len(train_loader))
     
     return train_loss/len(train_loader), train_acc, valid_loss/len(valid_loader), valid_acc
 
 
 
 def train_teacher(teacher_nw, teacher_id, nb_teachers, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR):
-    criterion = nn.CrossEntropyLoss(reduction="mean")
-    optimizer = Adam(teacher_nw.parameters(), lr=lr)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
+    criterion = nn.CrossEntropyLoss()
+    #optimizer = SGD(teacher_nw.parameters(), lr=lr, momentum=0.9, weight_decay=weight_decay)
+    optimizer = Adam(teacher_nw.parameters(), lr=lr, weight_decay=weight_decay)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer=optimizer,
+        mode="min",
+        factor=0.1,
+        patience=10)
     metrics = []
     for epoch in range(1, n_epochs+1):
         args = train_one_epoch(teacher_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device)
