@@ -14,6 +14,13 @@ def resolve_dataset(dataset_name):
         experiment_config['inputs'] = 3
         experiment_config['channels'] = 3
         experiment_config['batch_size'] = 256
+    elif dataset_name=="MNIST":
+        experiment_config['code_dim'] = 10
+        experiment_config['model_teacher'] = "mnistresnet"
+        experiment_config['model_student'] = "mnistresnet"
+        experiment_config['inputs'] = 1
+        experiment_config['channels'] = 1
+        experiment_config['batch_size'] = 256
     return experiment_config
 
     #TODO MNIST

@@ -121,6 +121,14 @@ def ResNet152(*args):
     return ResNet(Bottleneck, [3, 8, 36, 3])
 
 
+def MNISTResNet(*args):
+    self = ResNet(BasicBlock, [1, 1, 1, 1])
+    self.conv1 = nn.Conv2d(1, 64, kernel_size=3,
+                        stride=1, padding=1, bias=False)
+    return self
+    
+
+
 
 
 def accuracy(outputs, labels):
