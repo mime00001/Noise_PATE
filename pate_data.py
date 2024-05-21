@@ -12,6 +12,12 @@ torch.manual_seed(42)
 LOG_DIR_DATA = "/disk2/michel/data"
 
 def query_teachers(dataset_name, nb_teachers):
+    """queries the teacher ensemble for labels about a specific dataset
+
+    Args:
+        dataset_name (string): Name of dataset
+        nb_teachers (int): Number of teachers
+    """
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(dataset_name)
     labels = [[] for i in range(nb_teachers)]
@@ -25,7 +31,12 @@ def query_teachers(dataset_name, nb_teachers):
         teacher_name = conventions.resolve_teacher_name(experiment_config)
         teacher_name += "_{}".format(i)
         LOG_DIR = '/disk2/michel/Pretrained_NW'
-        teacher_path = os.path.join(LOG_DIR, dataset_name, teacher_name)
+        if dataset_name == "noise_MNIST":
+            teacher_path = os.path.join(LOG_DIR, "MNIST", teacher_name)
+        if dataset_name == "noise_CIFAR10":
+            teacher_path = os.path.join(LOG_DIR, "CIFAR10", teacher_name)
+        else:
+            teacher_path = os.path.join(LOG_DIR, dataset_name, teacher_name)
         teacher_nw = torch.load(teacher_path)
         teacher_nw = teacher_nw.to(device)
         teacher_nw.train() #set model to training mode, batchnorm trick
@@ -40,12 +51,18 @@ def query_teachers(dataset_name, nb_teachers):
             label = np.argmax(teacher_output.cpu().numpy(), axis=1)
             for j in label:
                 labels[i].append(j)
-    path = LOG_DIR_DATA + "/teacher_labels/{}".format(dataset_name)
+    path = LOG_DIR_DATA + "/vote_array/{}".format(dataset_name)
     labels = np.array(labels)
     np.save(path, labels, allow_pickle=True)
 
     
 def create_Gaussian_noise(dataset_name, size):
+    """Creates Gaussian noise, to be fed to the teacher ensemble and used for training the student. Always has mean 0 and std 1.
+
+    Args:
+        dataset_name (string): Name of the dataset for which we create noise, either MNIST or CIFAR10
+        size (int): Amount of the data to be created, i.e. 10000
+    """
     
     if dataset_name == "MNIST":
         data = np.random.normal(0.0, 1.0, (size, 28, 28))

@@ -37,7 +37,8 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
     accs = []
     for data, target in valid_loader:
         data, target = data.to(device), target.to(device)
-        output = target_nw(data)
+        with torch.no_grad:
+            output = target_nw(data)
         loss = criterion(output, target)
         valid_loss += loss.item()
         accs.append(misc.accuracy_metric(output.detach(), target))

@@ -122,6 +122,9 @@ def inference_pate(vote_array, threshold, sigma_threshold, sigma_gnmax, epsilon,
     achieved_epsilon = get_actually_consumed_epsilon(dp_eps)
     print(achieved_epsilon)
     final_labels = get_final_noisy_labels(noisy_labels, indices_answered, max_num_query)
+    
+    np.save(savepath, final_labels)
+    
     return final_labels
     #pd.DataFrame(final_labels).to_csv(savepath, index=False, header=None)
 
