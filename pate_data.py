@@ -28,7 +28,7 @@ def query_teachers(dataset_name, nb_teachers):
         teacher_path = os.path.join(LOG_DIR, dataset_name, teacher_name)
         teacher_nw = torch.load(teacher_path)
         teacher_nw = teacher_nw.to(device)
-        teacher_nw.train()
+        teacher_nw.train() #set model to training mode, batchnorm trick
         testindex = 0
         for data, _ in train_loader:
             if testindex == 0:
@@ -48,16 +48,14 @@ def query_teachers(dataset_name, nb_teachers):
 def create_Gaussian_noise(dataset_name, size):
     
     if dataset_name == "MNIST":
-        data = np.random.normal(0.0, 1.0, (size, 28, 28, 1))
-        path = LOG_DIR_DATA + "/Noise_MNIST/{}".format(size)
+        data = np.random.normal(0.0, 1.0, (size, 28, 28))
+        path = LOG_DIR_DATA + "/noise_MNIST"
         np.save(path, data, allow_pickle=True)
     elif dataset_name == "CIFAR10":
         data = np.random.normal(0.0, 1.0, (size, 32, 32, 3))
-        path = LOG_DIR_DATA + "/Noise_CIFAR10/{}".format(size)
+        path = LOG_DIR_DATA + "/noise_CIFAR10"
         np.save(path, data, allow_pickle=True)
         
     
-        
-    #TODO finish the function, such that it can accept a dataset shape and then create noise data accordingly
-    #TODO CIFAR10 and MNIST noise data 
+
     

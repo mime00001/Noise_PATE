@@ -34,3 +34,12 @@ def resolve_teacher_name(experiment_config):
     )
     model_name += ".model"
     return model_name
+
+def resolve_student_name(experiment_config):
+    model_name = "student_"
+    model_name += "{}_{}".format(
+        experiment_config['dataset_name'],
+        experiment_config['model_student']
+    )
+    model_name += ".model"
+    return model_name

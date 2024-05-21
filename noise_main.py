@@ -23,4 +23,4 @@ print(a.shape)
 #kd lr=0.001, decay =0
 #CAPC epochs=500, nb_teachers = 50, lr=0.01, decay = 1e-5
 
-#for mnist epochs = 35, lr = 0.001, decay = 0, sigma1 = 150, sigma2 = 50, delta = 10e-8, epsilon =3, T=150
+#for mnist epochs = 35, lr = 0.001, decay = 0, sigma1 = 150, sigma2 = 50, delta = 10e-8, epsilon =3, T=200
