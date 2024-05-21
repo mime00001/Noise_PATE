@@ -112,6 +112,7 @@ def util_train_teachers(dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_
         plt.legend()
         plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_teacher{}.png'.format(teacher_id)), dpi=200)
         plt.close()
+        print("Teacher {} training is finished.".format(teacher_id))
         
         
 def train_specific_teacher(teacher_id, dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', **kwargs):
@@ -141,6 +142,20 @@ def train_specific_teacher(teacher_id, dataset_name, n_epochs, nb_teachers=50, l
     model_name = conventions.resolve_teacher_name(experiment_config)
     model_name+="_{}".format(teacher_id)
     torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), model_name))
+    plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
+    plt.plot(range(1, len(metrics[3])+1), metrics[3], label="Valid Accuracy")
+    plt.title('Teacher Training teacher{}'.format(teacher_id))
+    plt.legend()
+    plt.savefig(os.path.join(LOG_DIR, 'Plots', 'accuracy_teacher{}.png'.format(teacher_id)), dpi=200)
+    plt.close()
+
+    plt.plot(range(1, len(metrics[0])+1), metrics[0], label="Train Loss")
+    plt.plot(range(1, len(metrics[2])+1), metrics[2], label="Valid Loss")
+
+    plt.title('Teacher Training teacher{}'.format(teacher_id))
+    plt.legend()
+    plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_teacher{}.png'.format(teacher_id)), dpi=200)
+    plt.close()
     
 if __name__ == '__main__':
     fire.Fire(util_train_teachers)

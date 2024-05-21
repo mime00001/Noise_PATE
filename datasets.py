@@ -71,7 +71,7 @@ def get_CIFAR10(batch_size, teacher_id, nb_teachers, valid_size=0.2):
 
     return getDataloaders(partition_train, testset, 0.0, batch_size, num_workers)  # train_loader, valid_loader, test_loader
 
-def get_CIFAR10_PATE(batch_size):
+def get_CIFAR10_PATE(batch_size, validation_size=0.2):
     
     num_workers = 4
 
@@ -95,9 +95,16 @@ def get_CIFAR10_PATE(batch_size):
     trainset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
     testset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test) #, transform=transform_test
     
-    train_loader, valid_loader, test_loader = getDataloaders(trainset, testset, 0.0, batch_size, num_workers)
+    end = int(len(testset)*(1-validation_size))
     
-    return test_loader
+    partition_train = [testset[i] for i in range(end)]
+    partition_test = [testset[i] for i in range(end, len(testset))]
+    
+    train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers)
+    valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers)
+    test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers)
+    
+    return train_loader, valid_loader, test_loader
 
 def get_MNIST(batch_size, teacher_id, nb_teachers, valid_size=0.2):
     num_workers = 4
@@ -126,6 +133,32 @@ def get_MNIST(batch_size, teacher_id, nb_teachers, valid_size=0.2):
 
     return getDataloaders(partition_train, testset, 0.0, batch_size, num_workers)  # train_loader, valid_loader, test_loader
 
+def get_MNIST_PATE(batch_size, validation_size=0.2):
+    num_workers = 4
+    transform_train = transform=transforms.Compose([
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+
+    transform_test = transforms.Compose([
+         transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+
+    trainset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
+    testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    
+    end = int(len(testset)*(1-validation_size))
+    
+    partition_train = [testset[i] for i in range(end)]
+    partition_test = [testset[i] for i in range(end, len(testset))]
+    
+    train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    
+    return train_loader, valid_loader, test_loader
+    
 #TODO get_noise_CIFAR10(...)
 #TODO get_MNIST(...)
 #TODO get_noise_MNIST(...)
