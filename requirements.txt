@@ -6,3 +6,4 @@ fire
 absl-py
 scipy
 pandas
+tensorflow
