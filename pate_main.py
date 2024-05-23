@@ -199,5 +199,5 @@ if __name__ == "__main__":
 #votes_df = pd.read_csv('public_vote.txt', sep=" ", header=None)
 #vote_array = votes_df.to_numpy(dtype=int).T # THIS IS VERY IMPORTANT: MAKE SURE THE SHAPE IS (num_samples, num_teachers)
 
-main(vote_array, 360, 50, 1, 1, delta[0], num_classes, savepath = None, tune_hyper=False, true_labels=None)
+#main(vote_array, 360, 50, 1, 1, delta[0], num_classes, savepath = None, tune_hyper=False, true_labels=None)
 

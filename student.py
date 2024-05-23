@@ -34,7 +34,7 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
     accs = []
     for data, target in valid_loader:
         data, target = data.to(device), target.to(device)
-        with torch.no_grad:
+        with torch.no_grad():
             output = target_nw(data)
         loss = criterion(output, target)
         valid_loss += loss.item()
@@ -65,7 +65,7 @@ def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_d
         
     return [list(i) for i in zip(*metrics)]
 
-
+@misc.log_experiment
 def util_train_student(dataset_name, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', **kwargs):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(dataset_name)

@@ -37,7 +37,7 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
     accs = []
     for data, target in valid_loader:
         data, target = data.to(device), target.to(device)
-        with torch.no_grad:
+        with torch.no_grad():
             output = target_nw(data)
         loss = criterion(output, target)
         valid_loss += loss.item()
@@ -96,7 +96,8 @@ def util_train_teachers(dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_
         metrics = train_teacher(teacher_model, teacher_id, nb_teachers,  train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR)
         
         model_name = conventions.resolve_teacher_name(experiment_config)
-        model_name+="_{}".format(teacher_id)
+        if nb_teachers!=1:
+            model_name+="_{}".format(teacher_id)
         torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), model_name))
         
         plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")

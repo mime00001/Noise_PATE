@@ -163,29 +163,30 @@ def get_MNIST_PATE(batch_size, validation_size=0.2):
 
 def get_MNIST_student(batch_size, validation_size=0.2):
     num_workers = 4
-    transform_train = transform=transforms.Compose([
+    
+    transform_train=transforms.Compose([
         transforms.ToTensor(), # first, convert image to PyTorch tensor
         transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
     ])
 
     transform_test = transforms.Compose([
-         transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
         transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
     ])
 
     trainset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
     testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
     
+    
     end = int(len(testset)*(1-validation_size))
     
-    target_path = LOG_DIR_DATA + "teacher_labels/MNIST"
+    target_path = LOG_DIR_DATA + "/teacher_labels/MNIST.npy"
     
     teacher_labels = np.load(target_path)
     
-    partition_train = [[testset.data[i], torch.from_numpy(teacher_labels[i])] for i in range(end) if teacher_labels[i]!= -1] #remove all datapoints, where we have no answer from the teacher ensemble
+    partition_train = [[testset[i][0], torch.tensor(teacher_labels[i])] for i in range(end) if teacher_labels[i]!= -1] #remove all datapoints, where we have no answer from the teacher ensemble
     partition_test = [testset[i] for i in range(end, len(testset))]
-    
-    
+        
     
     train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
@@ -197,22 +198,21 @@ def get_MNIST_student(batch_size, validation_size=0.2):
 def get_noise_MNIST_PATE(batch_size):
     num_workers = 4
     
-    path = LOG_DIR_DATA + "noise_MNIST"
+    path = LOG_DIR_DATA + "/noise_MNIST.npy"
     
     data_set = np.load(path)
     
-    for j in range(len(data_set)):
-        data_set[j] = [torch.from_numpy(data_set[j]), torch.tensor(0)] #add dummy labels, such that i dont have to rewrite pate_data.query_teachers()
+    train_data = [(torch.FloatTensor(data_set[i]).unsqueeze(0), torch.tensor(0)) for i in range(len(data_set))]
     
-    train_loader = torch.utils.data.DataLoader(data_set, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     
     return train_loader, train_loader, train_loader #return same dataloader so i dont have to rewrite function
         
 def get_noise_MNIST_student(batch_size):
     num_workers = 4
     
-    path = LOG_DIR_DATA + "noise_MNIST"
-    target_path = LOG_DIR_DATA + "teacher_labels/noise_MNIST"
+    path = LOG_DIR_DATA + "/noise_MNIST.npy"
+    target_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
     
     dataset = np.load(path)
     targets = np.load(target_path)
@@ -226,11 +226,13 @@ def get_noise_MNIST_student(batch_size):
     
     testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
     
-    trainset = [[torch.from_numpy(dataset[i]), torch.from_numpy(targets[i])] for i in range(len(dataset)) if targets[i] != -1] #use all available datapoints which have been answered by teachers
+    trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(dataset)) if targets[i] != -1] #use all available datapoints which have been answered by teachers
     
-    train_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    print(len(trainset))
+    
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     
     
     return train_loader, valid_loader, test_loader

@@ -33,7 +33,7 @@ def query_teachers(dataset_name, nb_teachers):
         LOG_DIR = '/disk2/michel/Pretrained_NW'
         if dataset_name == "noise_MNIST":
             teacher_path = os.path.join(LOG_DIR, "MNIST", teacher_name)
-        if dataset_name == "noise_CIFAR10":
+        elif dataset_name == "noise_CIFAR10":
             teacher_path = os.path.join(LOG_DIR, "CIFAR10", teacher_name)
         else:
             teacher_path = os.path.join(LOG_DIR, dataset_name, teacher_name)
@@ -54,6 +54,8 @@ def query_teachers(dataset_name, nb_teachers):
     path = LOG_DIR_DATA + "/vote_array/{}".format(dataset_name)
     labels = np.array(labels)
     np.save(path, labels, allow_pickle=True)
+    
+    return labels
 
     
 def create_Gaussian_noise(dataset_name, size):
@@ -63,6 +65,8 @@ def create_Gaussian_noise(dataset_name, size):
         dataset_name (string): Name of the dataset for which we create noise, either MNIST or CIFAR10
         size (int): Amount of the data to be created, i.e. 10000
     """
+    
+    np.random.seed(42)
     
     if dataset_name == "MNIST":
         data = np.random.normal(0.0, 1.0, (size, 28, 28))
