@@ -18,7 +18,15 @@ def get_how_many_correctly_answered(predicted_labels, true_labels):
     """
     Given the noisy predictions from the teachers and the true validation labels, we get the number of correctly answered labels.
     """
-    correct_indices = predicted_labels==true_labels
+    
+    
+    mask = ~np.array([x == -1 for x in predicted_labels])
+    
+    arr1 = predicted_labels[mask]
+    arr2 = true_labels[mask]
+    
+    correct_indices = arr1==arr2
+    
     number_correct_indices = np.mean(correct_indices)
     return number_correct_indices
 
@@ -68,7 +76,9 @@ def tune_pate(vote_array, threshold_list, sigma_threshold_list, sigma_gnmax_list
               'num_correctly_answered']
  
     for threshold in threshold_list:
+        print("Currently at threshold: {}".format(threshold))
         for sigma_threshold in sigma_threshold_list:
+            print("Currently at sigma_threshold: {}".format(sigma_threshold))
             for sigma_gnmax in sigma_gnmax_list:
                 for epsilon in epsilon_list:
                     for delta in delta_list:

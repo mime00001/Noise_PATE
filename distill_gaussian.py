@@ -20,7 +20,7 @@ LOG_DIR = "/disk2/michel/"
 criterion = misc.DistillationLoss()
 xe = nn.CrossEntropyLoss(reduction='mean')
 
-def distill_using_data(teacher_nw, student_nw, train_loader, valid_loader, n_epochs, lr, verbose, device, save, LOG_DIR):
+def distill_using_data(teacher_nw, student_nw, train_loader, valid_loader, n_epochs, lr, verbose, device, save, LOG_DIR, label=False):
     print("\nDistillation using original training data..")
     optimizer = Adam(student_nw.parameters(), lr=lr)
     metrics = []
@@ -34,9 +34,13 @@ def distill_using_data(teacher_nw, student_nw, train_loader, valid_loader, n_epo
             optimizer.zero_grad()
             with torch.no_grad():
                 teacher_output = teacher_nw(data)
-            teacher_label = torch.tensor(np.argmax(teacher_output.cpu().numpy(), axis=1)).to(device)
+            
             student_output = student_nw(data)
-            loss = xe(student_output, teacher_label)
+            if label:
+                teacher_label = torch.tensor(np.argmax(teacher_output.cpu().numpy(), axis=1)).to(device)
+                loss = xe(student_output, teacher_label)
+            else:
+                loss = criterion(student_output, teacher_output)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -60,26 +64,39 @@ def distill_using_data(teacher_nw, student_nw, train_loader, valid_loader, n_epo
     return [list(i) for i in zip(*metrics)]  # train_loss, valid_loss, valid_acc
 
 
-def distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_epochs, len_batch, lr, verbose, device, save, LOG_DIR):
+def distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_epochs, len_batch, lr, verbose, device, save, LOG_DIR, label=False):
     print("\nDistillation using Gaussian noise..")
     optimizer = Adam(student_nw.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
     metrics = []
 
+    torch.manual_seed(42)
+    
     data_sample = next(iter(valid_loader))[0]
+    
+    batch = []
+    for i in range(len_batch):
+        data = torch.randn_like(data_sample, device=device)
+        batch.append(data)
+    
+    
     valid_loss_prev = np.inf
     teacher_nw.train()
     student_nw.train()
     for epoch in range(1, n_epochs+1):
         train_loss = 0.0
-        for batch in range(len_batch):
+        for b in batch:
             optimizer.zero_grad()
-            data = torch.randn_like(data_sample, device=device)
+            data = b
             with torch.no_grad():
                 teacher_output = teacher_nw(data)
             student_output = student_nw(data)
-            teacher_label = torch.tensor(np.argmax(teacher_output.cpu().numpy(), axis=1)).to(device)
-            loss = xe(student_output, teacher_label)
+            
+            if label:
+                teacher_label = torch.tensor(np.argmax(teacher_output.cpu().numpy(), axis=1)).to(device)
+                loss = xe(student_output, teacher_label)
+            else:
+                loss = criterion(student_output, teacher_output)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -94,7 +111,7 @@ def distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_ep
             valid_loss += loss.item()
             accs.append(misc.accuracy_metric(student_output.detach(), target))
 
-        scheduler.step(valid_loss)
+        scheduler.step(train_loss)
 
         metrics.append([train_loss/len_batch, valid_loss/len(valid_loader), np.mean(accs)])
         if verbose and epoch % verbose==0:
@@ -109,7 +126,7 @@ def distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_ep
 
 
 @misc.log_experiment
-def experiment_distil_gaussian(dataset_name, n_epochs_gaussian, n_epochs_data, lr=1e-3, compare=False, verbose=True, LOG_DIR='./', desc=None, save=False, **kwargs):
+def experiment_distil_gaussian(dataset_name, n_epochs_gaussian, n_epochs_data, lr=1e-3, compare=False, verbose=True, LOG_DIR='./', desc=None, save=False, label=False, **kwargs):
     print("Description:", desc)
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(dataset_name)
@@ -126,12 +143,13 @@ def experiment_distil_gaussian(dataset_name, n_epochs_gaussian, n_epochs_data, l
         dataset_name,
         experiment_config['batch_size'],
         0,
-        1
+        5
     ))
 
     len_batch = len(train_loader)
+    print(len_batch)
 
-    teacher_name = conventions.resolve_teacher_name(experiment_config)
+    teacher_name = conventions.resolve_teacher_name(experiment_config) + "_0"
     teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","MNIST", teacher_name)
     teacher_nw = torch.load(teacher_path)
     teacher_nw.to(device)
@@ -142,13 +160,13 @@ def experiment_distil_gaussian(dataset_name, n_epochs_gaussian, n_epochs_data, l
         experiment_config['code_dim']
     )).to(device)
 
-    metrics = distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_epochs_gaussian, len_batch, lr, verbose, device, save, LOG_DIR)
+    metrics = distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_epochs_gaussian, len_batch, lr, verbose, device, save, LOG_DIR, label)
     plt.plot(range(1, len(metrics[2])+1), metrics[2], label="Accuracy Noise")
 
     if compare:
         teacher_nw = torch.load(teacher_path)
         student_nw = student_nw.apply(misc.weight_reset)
-        metrics = distill_using_data(teacher_nw, student_nw, train_loader, valid_loader, n_epochs_data, lr, verbose, device, save, LOG_DIR)
+        metrics = distill_using_data(teacher_nw, student_nw, train_loader, valid_loader, n_epochs_data, lr, verbose, device, save, LOG_DIR, label)
         plt.plot(range(1, len(metrics[2])+1), metrics[2], label="Accuracy Data")
 
     plt.title('Student Training')

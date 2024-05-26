@@ -47,10 +47,12 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
 
 
 
-def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR):
+def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim="Adam"):
     criterion = nn.CrossEntropyLoss()
-    #optimizer = SGD(teacher_nw.parameters(), lr=lr, momentum=0.9, weight_decay=weight_decay)
-    optimizer = Adam(student_nw.parameters(), lr=lr, weight_decay=weight_decay)
+    if optim=="SGD":    
+        optimizer = SGD(student_nw.parameters(), lr=lr, momentum=0.9, weight_decay=weight_decay)
+    elif optim=="Adam":
+        optimizer = Adam(student_nw.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer=optimizer,
         mode="min",
@@ -66,7 +68,7 @@ def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_d
     return [list(i) for i in zip(*metrics)]
 
 @misc.log_experiment
-def util_train_student(dataset_name, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', **kwargs):
+def util_train_student(dataset_name, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', optimizer="Adam", **kwargs):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(dataset_name)
     # override
@@ -87,7 +89,7 @@ def util_train_student(dataset_name, n_epochs, lr=1e-3, weight_decay=0, verbose=
         experiment_config["inputs"],
         experiment_config["code_dim"]
     )).to(device)
-    metrics = train_student(student_model, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR)
+    metrics = train_student(student_model, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer)
        
     model_name = conventions.resolve_student_name(experiment_config)
     torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), model_name))

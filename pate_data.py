@@ -39,7 +39,9 @@ def query_teachers(dataset_name, nb_teachers):
             teacher_path = os.path.join(LOG_DIR, dataset_name, teacher_name)
         teacher_nw = torch.load(teacher_path)
         teacher_nw = teacher_nw.to(device)
+        
         teacher_nw.train() #set model to training mode, batchnorm trick
+        
         testindex = 0
         for data, _ in train_loader:
             if testindex == 0:
