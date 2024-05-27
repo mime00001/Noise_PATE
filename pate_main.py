@@ -19,13 +19,13 @@ def get_how_many_correctly_answered(predicted_labels, true_labels):
     Given the noisy predictions from the teachers and the true validation labels, we get the number of correctly answered labels.
     """
     
+    condition = lambda x : x == -1
     
-    mask = ~np.array([x == -1 for x in predicted_labels])
     
-    arr1 = predicted_labels[mask]
-    arr2 = true_labels[mask]
+    arr1 = [x for x in predicted_labels if not condition(x)]
+    arr2 = [y for x, y in zip(predicted_labels, true_labels) if not condition(x)]
     
-    correct_indices = arr1==arr2
+    correct_indices = np.equal(arr1, arr2)
     
     number_correct_indices = np.mean(correct_indices)
     return number_correct_indices
