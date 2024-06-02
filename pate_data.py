@@ -11,11 +11,11 @@ torch.manual_seed(42)
 
 LOG_DIR_DATA = "/disk2/michel/data"
 
-def query_teachers(dataset_name, nb_teachers):
+def query_teachers(dataset_name : str, nb_teachers : int):
     """queries the teacher ensemble for labels about a specific dataset
 
     Args:
-        dataset_name (string): Name of dataset
+        dataset_name (str): Name of dataset
         nb_teachers (int): Number of teachers
     """
     device = misc.get_device()
@@ -64,7 +64,7 @@ def create_Gaussian_noise(dataset_name, size):
     """Creates Gaussian noise, to be fed to the teacher ensemble and used for training the student. Always has mean 0 and std 1.
 
     Args:
-        dataset_name (string): Name of the dataset for which we create noise, either MNIST or CIFAR10
+        dataset_name (str): Name of the dataset for which we create noise, either MNIST or CIFAR10
         size (int): Amount of the data to be created, i.e. 10000
     """
     

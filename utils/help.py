@@ -137,41 +137,57 @@ def test_model_accuracy(model_path, dataset_name):
     
     return valid_acc
 
-def test_ensemble_accuracy():
+def test_ensemble_accuracy(dataset_name):
     
-    
-    noise_vote_array_path = LOG_DIR_DATA +  "/vote_array/noise_MNIST.npy"
+    if dataset_name == "noise_MNIST":
+        noise_vote_array_path = LOG_DIR_DATA +  "/vote_array/noise_MNIST.npy"
 
-    noise_label_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
+        noise_label_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
+
+        noise_vote_array = np.load(noise_vote_array_path)
+        vote_array=noise_vote_array.T
+        t,l,r = datasets.get_noise_MNIST_PATE(256)
+        
+        true_labels=[]
+        device = misc.get_device()
+        experiment_config = conventions.resolve_dataset("noise_MNIST")
+        teacher_name = conventions.resolve_teacher_name(experiment_config)
+        teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","MNIST", teacher_name)
+        teacher_nw = torch.load(teacher_path)
+        teacher_nw.to(device)
+        teacher_nw.train()
+        
+            
+        for data, _ in t:
+            data = data.to(device)
+            with torch.no_grad():
+                teacher_output = teacher_nw(data)   
+            label = np.argmax(teacher_output.cpu().numpy(), axis=1)
+            for j in label:
+                true_labels.append(j)
+        
+        
+        
+    elif dataset_name == "MNIST":
+        vote_array_path = LOG_DIR_DATA + "/vote_array/MNIST.npy"
+        vote_array = np.load(vote_array_path)
+        vote_array=vote_array.T
+        t,l,r = datasets.get_MNIST_PATE(256)
+        
+        true_labels = []
+        
+        for data, label in t:
+            for j in label:
+                true_labels.append(j)
     
-    noise_vote_array = np.load(noise_vote_array_path)
-    noise_vote_array=noise_vote_array.T
-    
-    num_samples = noise_vote_array.shape[0]
+    num_samples = vote_array.shape[0]
     
     predicted_labels = np.zeros(num_samples)
     
-    for i in range(len(noise_vote_array)):
-        predicted_labels[i] = np.bincount(noise_vote_array[i]).argmax()
-    
-    true_labels=[]
-    device = misc.get_device()
-    experiment_config = conventions.resolve_dataset("noise_MNIST")
-    teacher_name = conventions.resolve_teacher_name(experiment_config)
-    teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","MNIST", teacher_name)
-    teacher_nw = torch.load(teacher_path)
-    teacher_nw.to(device)
-    teacher_nw.train()
+    for i in range(len(vote_array)):
+        predicted_labels[i] = np.bincount(vote_array[i]).argmax()
     
     
-    t,l,r = datasets.get_noise_MNIST_PATE(256)
-    for data, _ in t:
-        data = data.to(device)
-        with torch.no_grad():
-            teacher_output = teacher_nw(data)   
-        label = np.argmax(teacher_output.cpu().numpy(), axis=1)
-        for j in label:
-            true_labels.append(j)
     
     percentage = pate_main.get_how_many_correctly_answered(predicted_labels, true_labels)
     

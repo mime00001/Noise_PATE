@@ -147,7 +147,6 @@ def experiment_distil_gaussian(dataset_name, n_epochs_gaussian, n_epochs_data, l
     ))
 
     len_batch = len(train_loader)
-    print(len_batch)
 
     teacher_name = conventions.resolve_teacher_name(experiment_config) + "_0"
     teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","MNIST", teacher_name)

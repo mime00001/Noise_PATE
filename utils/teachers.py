@@ -116,7 +116,7 @@ def util_train_teachers(dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_
         plt.close()
         print("Teacher {} training is finished.".format(teacher_id))
         
-        
+@misc.log_experiment        
 def train_specific_teacher(teacher_id, dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', **kwargs):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(dataset_name)
@@ -161,3 +161,58 @@ def train_specific_teacher(teacher_id, dataset_name, n_epochs, nb_teachers=50, l
     
 if __name__ == '__main__':
     fire.Fire(util_train_teachers)
+    
+    
+@misc.log_experiment
+def util_train_teachers_same_init(dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', **kwargs):
+    device = misc.get_device()
+    experiment_config = conventions.resolve_dataset(dataset_name)
+    # override
+    for k, v in kwargs.items():
+        experiment_config[k] = v
+    print('Experiment Configuration:')
+    print(experiment_config)
+
+    os.makedirs('/disk2/michel/data', exist_ok=True)
+    os.makedirs('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), exist_ok=True)
+    
+    teacher_model = model = eval("models.{}.Target_Net({}, {})".format(
+            experiment_config['model_teacher'],
+            experiment_config['inputs'],
+            experiment_config['code_dim']
+    )).to(device)
+    
+    torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), "init_model"))
+    
+    for teacher_id in range(nb_teachers):
+        train_loader, _, valid_loader = eval("datasets.get_{}({}, {}, {})".format(
+            dataset_name,
+            experiment_config['batch_size'],
+            teacher_id,
+            nb_teachers
+        ))
+        
+        teacher_model = model = torch.load(os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), "init_model"))
+        
+        metrics = train_teacher(teacher_model, teacher_id, nb_teachers,  train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR)
+        
+        model_name = conventions.resolve_teacher_name(experiment_config)
+        if nb_teachers!=1:
+            model_name+="_{}".format(teacher_id)
+        torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), model_name))
+        
+        plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
+        plt.plot(range(1, len(metrics[3])+1), metrics[3], label="Valid Accuracy")
+        plt.title('Teacher Training teacher{}'.format(teacher_id))
+        plt.legend()
+        plt.savefig(os.path.join(LOG_DIR, 'Plots', 'accuracy_teacher{}.png'.format(teacher_id)), dpi=200)
+        plt.close()
+
+        plt.plot(range(1, len(metrics[0])+1), metrics[0], label="Train Loss")
+        plt.plot(range(1, len(metrics[2])+1), metrics[2], label="Valid Loss")
+
+        plt.title('Teacher Training teacher{}'.format(teacher_id))
+        plt.legend()
+        plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_teacher{}.png'.format(teacher_id)), dpi=200)
+        plt.close()
+        print("Teacher {} training is finished.".format(teacher_id))
