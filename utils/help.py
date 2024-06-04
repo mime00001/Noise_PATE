@@ -25,16 +25,6 @@ import pandas as pd
 
 LOG_DIR_DATA = "/disk2/michel/data"
 
-def run_experiment(dataset_name, n_epochs, nb_teachers=200, threshold=120, sigma_threshold=110, sigma_gnmax=50, epsilon=3, delta=10e-8, num_classes=10):
-    
-    teachers.util_train_teachers(dataset_name=dataset_name, n_epochs=n_epochs, nb_teachers=nb_teachers)
-    
-    vote_array = pate_data.query_teachers(dataset_name=dataset_name, nb_teachers=nb_teachers).T
-    
-    pate_main.inference_pate(vote_array=vote_array, threshold=threshold, sigma_threshold=sigma_threshold, sigma_gnmax=sigma_gnmax, epsilon=epsilon, delta=delta, num_classes=num_classes)
-    
-    student.util_train_student(dataset_name="MNIST", n_epochs=100, lr=0.001, weight_decay=0, verbose=True, save=True)
-    
 
 def remove_rows(input_file, output_file, column_name, condition):
     # Read the CSV file
@@ -49,13 +39,13 @@ def remove_rows(input_file, output_file, column_name, condition):
     filtered_df.to_csv(output_file, index=False)
 
 
-def print_top_values(input_file, column_name, top_n_values):
+def print_top_values(input_file, column_name, top_n_values, target_epsilon=3):
     # Read the CSV file
     df = pd.read_csv(input_file)
     
-    #condition = lambda x : x > 5
+    condition = lambda x : x == target_epsilon
     
-    #df = df[~df["target_epsilon"].apply(condition)]
+    df = df[~df["target_epsilon"].apply(condition)]
     
     # Sort the DataFrame by the specified column in descending order
     sorted_df = df.sort_values(by=column_name, ascending=False)
@@ -77,11 +67,11 @@ def run_parameter_search():
     noise_vote_array = np.load(noise_vote_array_path)
     noise_vote_array=noise_vote_array.T
     
-    threshold_list = [80, 150]
-    sigma_threshold_list = [50, 80]
-    sigma_gnmax_list = [10, 20, 30]
+    threshold_list = [80, 100, 120, 150]
+    sigma_threshold_list = [50, 80, 120]
+    sigma_gnmax_list = [20, 30, 40]
     epsilon_list = [3, 5, 10]
-    delta_list =[10e-8]
+    delta_list =[10e-5]
     num_classes=10
     savepath='./pate_params_new'
     
@@ -135,6 +125,7 @@ def test_model_accuracy(model_path, dataset_name):
         accs.append(misc.accuracy_metric(output.detach(), target))
     valid_acc = np.mean(accs)
     
+    print(valid_acc)
     return valid_acc
 
 def test_ensemble_accuracy(dataset_name):
@@ -192,6 +183,5 @@ def test_ensemble_accuracy(dataset_name):
     percentage = pate_main.get_how_many_correctly_answered(predicted_labels, true_labels)
     
     return percentage
-    
     
     

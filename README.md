@@ -13,7 +13,7 @@ This codebase runs on `Python 3.12.3`. It uses common Python libraries, such as 
 
 
 
-## Links
+## References
 
 PATE framework: https://github.com/tensorflow/privacy/tree/master/research/pate_2017 and https://github.com/tensorflow/privacy/tree/master/research/pate_2018
 

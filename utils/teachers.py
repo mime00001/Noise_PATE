@@ -159,8 +159,6 @@ def train_specific_teacher(teacher_id, dataset_name, n_epochs, nb_teachers=50, l
     plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_teacher{}.png'.format(teacher_id)), dpi=200)
     plt.close()
     
-if __name__ == '__main__':
-    fire.Fire(util_train_teachers)
     
     
 @misc.log_experiment

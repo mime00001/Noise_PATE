@@ -14,7 +14,8 @@ import conventions
 from utils import misc
 
 
-def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device):
+def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device, label=True):
+    xe = nn.CrossEntropyLoss()
     target_nw.train()
     train_loss = 0.0
     accs = []
@@ -25,8 +26,9 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
         loss = criterion(output, target)
         loss.backward()
         optimizer.step()
+        
+        if label: accs.append(misc.accuracy_metric(output.detach(), target))
         train_loss += loss.item()
-        accs.append(misc.accuracy_metric(output.detach(), target))
     train_acc = np.mean(accs)
     
     target_nw.eval()
@@ -36,7 +38,7 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
         data, target = data.to(device), target.to(device)
         with torch.no_grad():
             output = target_nw(data)
-        loss = criterion(output, target)
+        loss = xe(output, target)
         valid_loss += loss.item()
         accs.append(misc.accuracy_metric(output.detach(), target))
     valid_acc = np.mean(accs)
@@ -47,8 +49,11 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
 
 
 
-def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim="Adam"):
-    criterion = nn.CrossEntropyLoss()
+def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim="Adam", label=True):
+    if label:
+        criterion = nn.CrossEntropyLoss()
+    else:
+        criterion= misc.DistillationLoss()
     if optim=="SGD":    
         optimizer = SGD(student_nw.parameters(), lr=lr, momentum=0.9, weight_decay=weight_decay)
     elif optim=="Adam":
@@ -60,7 +65,7 @@ def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_d
         patience=10)
     metrics = []
     for epoch in range(1, n_epochs+1):
-        args = train_one_epoch(student_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device)
+        args = train_one_epoch(student_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device, label)
         if verbose:
             print("Epoch: {} \tTraining Loss: {:.4f} \tTraining Accuracy: {:.4f} \tValidation Loss: {:.4f} \tValidation Accuracy: {:.4f}".format(epoch, *args))
         metrics.append(args)
@@ -110,3 +115,41 @@ def util_train_student(dataset_name, n_epochs, lr=1e-3, weight_decay=0, verbose=
     plt.close()
     print("Student training is finished.")
     
+@misc.log_experiment
+def util_train_student_same_init(dataset_name, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', optimizer="Adam", **kwargs):
+    device = misc.get_device()
+    experiment_config = conventions.resolve_dataset(dataset_name)
+    # override
+    for k, v in kwargs.items():
+        experiment_config[k] = v
+    print('Experiment Configuration:')
+    print(experiment_config)
+
+    os.makedirs('/disk2/michel/data', exist_ok=True)
+    os.makedirs('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), exist_ok=True)
+    
+    train_loader, _, valid_loader = eval("datasets.get_{}_student({})".format(
+        dataset_name,
+        experiment_config["batch_size"]
+    ))
+    student_model = model = torch.load(os.path.join('/disk2/michel/Pretrained_NW/MNIST', "init_model"))
+    metrics = train_student(student_model, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer)
+       
+    model_name = conventions.resolve_student_name(experiment_config)
+    torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), model_name))
+    
+    plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
+    plt.plot(range(1, len(metrics[3])+1), metrics[3], label="Valid Accuracy")
+    plt.title('Student Training')
+    plt.legend()
+    plt.savefig(os.path.join(LOG_DIR, 'Plots', 'accuracy_student.png'), dpi=200)
+    plt.close()
+
+    plt.plot(range(1, len(metrics[0])+1), metrics[0], label="Train Loss")
+    plt.plot(range(1, len(metrics[2])+1), metrics[2], label="Valid Loss")
+
+    plt.title('Student Training')
+    plt.legend()
+    plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_student.png'), dpi=200)
+    plt.close()
+    print("Student training is finished.")

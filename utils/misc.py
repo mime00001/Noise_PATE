@@ -39,10 +39,10 @@ class DistillationLoss:
 
     def __call__(self, student, teacher):
         student = F.log_softmax(student/self.T, dim=-1)
-        teacher = (teacher/self.T).softmax(dim=-1)
+        teacher = (teacher/self.T).softmax(dim=-1)        
         
         try: return -(teacher * student).sum(dim=1).mean()
-        except: import pdb; pdb.set_trace()
+        except: print(student); print(teacher)
 
 
 ################################################################

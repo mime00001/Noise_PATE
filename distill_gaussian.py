@@ -11,6 +11,7 @@ from torch.optim import Adam
 import torch.nn.functional as F
 
 import models
+from models import mnistresnet
 import datasets
 import conventions
 from utils import misc
@@ -143,12 +144,12 @@ def experiment_distil_gaussian(dataset_name, n_epochs_gaussian, n_epochs_data, l
         dataset_name,
         experiment_config['batch_size'],
         0,
-        5
+        10
     ))
 
     len_batch = len(train_loader)
 
-    teacher_name = conventions.resolve_teacher_name(experiment_config) + "_0"
+    teacher_name = conventions.resolve_teacher_name(experiment_config)
     teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","MNIST", teacher_name)
     teacher_nw = torch.load(teacher_path)
     teacher_nw.to(device)
@@ -173,6 +174,4 @@ def experiment_distil_gaussian(dataset_name, n_epochs_gaussian, n_epochs_data, l
     plt.savefig(os.path.join(LOG_DIR, 'Plots', 'accuracy.png'), dpi=400)
     plt.close()
 
-
-if __name__ == '__main__':
-    fire.Fire(experiment_distil_gaussian)
+#experiment_distil_gaussian("MNIST", 50, 50, compare=True, label=False)
