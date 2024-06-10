@@ -11,7 +11,7 @@ torch.manual_seed(42)
 
 LOG_DIR_DATA = "/disk2/michel/data"
 
-def query_teachers(dataset_name : str, nb_teachers : int):
+def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int):
     """queries the teacher ensemble for labels about a specific dataset
 
     Args:
@@ -19,10 +19,10 @@ def query_teachers(dataset_name : str, nb_teachers : int):
         nb_teachers (int): Number of teachers
     """
     device = misc.get_device()
-    experiment_config = conventions.resolve_dataset(dataset_name)
+    experiment_config = conventions.resolve_dataset(target_dataset)
     labels = [[] for i in range(nb_teachers)]
     train_loader, _, valid_loader = eval("datasets.get_{}_PATE({})".format( 
-            dataset_name,
+            query_dataset,
             experiment_config['batch_size']
     ))
     testdata = next(iter(train_loader))[0].numpy()
@@ -31,12 +31,12 @@ def query_teachers(dataset_name : str, nb_teachers : int):
         teacher_name = conventions.resolve_teacher_name(experiment_config)
         teacher_name += "_{}".format(i)
         LOG_DIR = '/disk2/michel/Pretrained_NW'
-        if dataset_name == "noise_MNIST":
+        if target_dataset == "noise_MNIST":
             teacher_path = os.path.join(LOG_DIR, "MNIST", teacher_name)
-        elif dataset_name == "noise_CIFAR10":
+        elif target_dataset == "noise_CIFAR10":
             teacher_path = os.path.join(LOG_DIR, "CIFAR10", teacher_name)
         else:
-            teacher_path = os.path.join(LOG_DIR, dataset_name, teacher_name)
+            teacher_path = os.path.join(LOG_DIR, target_dataset, teacher_name)
         teacher_nw = torch.load(teacher_path)
         teacher_nw = teacher_nw.to(device)
         
@@ -53,7 +53,7 @@ def query_teachers(dataset_name : str, nb_teachers : int):
             label = np.argmax(teacher_output.cpu().numpy(), axis=1)
             for j in label:
                 labels[i].append(j)
-    path = LOG_DIR_DATA + "/vote_array/{}".format(dataset_name)
+    path = LOG_DIR_DATA + "/vote_array/{}".format(query_dataset)
     labels = np.array(labels)
     np.save(path, labels, allow_pickle=True)
     
@@ -115,15 +115,15 @@ def query_teachers_softmax(dataset_name: str, nb_teachers: int):
             with torch.no_grad():
                 teacher_output = teacher_nw(data)   
             logit = teacher_output.cpu().numpy()
+            
             for j in logit:
                 logits[i].append(j)
     path = LOG_DIR_DATA + "/logit_array/{}".format(dataset_name)
+
     logits = np.array(logits)
     np.save(path, logits, allow_pickle=True)
     
     return logits
-
-
 
 def create_histogram_labels(vote_array):
     
@@ -137,9 +137,6 @@ def create_histogram_labels(vote_array):
         targets.append(count_array)
     
     return targets
-        
-
-
 
 def create_logit_labels(logit_array):
     
@@ -150,11 +147,20 @@ def create_logit_labels(logit_array):
     for sample in logit_array:
         combined_logits = sample[0]
         for logit in range(1, len(sample)):
-            combined_logits += logit
+            
+            combined_logits += sample[logit]
         combined_logits /= len(sample)
         targets.append(combined_logits)
     
     return targets
         
+def get_argmax_labels(vote_array):
+    targets = []
     
+    for sample in vote_array:
+        counts = np.bincount(sample)
+        label = np.argmax(counts)
+        targets.append(label)
+        
+    return targets
     

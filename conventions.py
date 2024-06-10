@@ -25,7 +25,6 @@ def resolve_dataset(dataset_name):
         experiment_config['batch_size'] = 256
     return experiment_config
 
-    #TODO MNIST
 
 
 def resolve_teacher_name(experiment_config):

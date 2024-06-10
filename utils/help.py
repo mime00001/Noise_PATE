@@ -43,7 +43,7 @@ def print_top_values(input_file, column_name, top_n_values, target_epsilon=3):
     # Read the CSV file
     df = pd.read_csv(input_file)
     
-    condition = lambda x : x == target_epsilon
+    condition = lambda x : x != target_epsilon
     
     df = df[~df["target_epsilon"].apply(condition)]
     
@@ -170,6 +170,18 @@ def test_ensemble_accuracy(dataset_name):
         for data, label in t:
             for j in label:
                 true_labels.append(j)
+
+    elif dataset_name == "FMNIST":
+        vote_array_path = LOG_DIR_DATA + "/vote_array/FMNIST.npy"
+        vote_array = np.load(vote_array_path)
+        vote_array=vote_array.T
+        t,l,r = datasets.get_FMNIST_PATE(256)
+        
+        true_labels = []
+        
+        for data, label in t:
+            for j in label:
+                true_labels.append(j)
     
     num_samples = vote_array.shape[0]
     
@@ -181,7 +193,10 @@ def test_ensemble_accuracy(dataset_name):
     
     
     percentage = pate_main.get_how_many_correctly_answered(predicted_labels, true_labels)
+    print(percentage)
     
     return percentage
-    
+
+
+
     

@@ -127,10 +127,10 @@ def distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_ep
 
 
 @misc.log_experiment
-def experiment_distil_gaussian(dataset_name, n_epochs_gaussian, n_epochs_data, lr=1e-3, compare=False, verbose=True, LOG_DIR='./', desc=None, save=False, label=False, **kwargs):
+def experiment_distil_gaussian(target_dataset, transfer_dataset, n_epochs_gaussian, n_epochs_data, lr=1e-3, compare=False, verbose=True, LOG_DIR='./', desc=None, save=False, label=False, **kwargs):
     print("Description:", desc)
     device = misc.get_device()
-    experiment_config = conventions.resolve_dataset(dataset_name)
+    experiment_config = conventions.resolve_dataset(target_dataset)
     # override
     for k, v in kwargs.items():
         experiment_config[k] = v
@@ -140,8 +140,16 @@ def experiment_distil_gaussian(dataset_name, n_epochs_gaussian, n_epochs_data, l
     print('Experiment Configuration:')
     print(experiment_config)
 
-    train_loader, _, valid_loader = eval("datasets.get_{}({}, {}, {})".format(
-        dataset_name,
+    train_loader, _, _ = eval("datasets.get_{}({}, {}, {})".format(
+        transfer_dataset,
+        experiment_config['batch_size'],
+        0,
+        10
+    ))
+    
+    
+    _, _, valid_loader = eval("datasets.get_{}({}, {}, {})".format(
+        target_dataset,
         experiment_config['batch_size'],
         0,
         10
@@ -160,6 +168,8 @@ def experiment_distil_gaussian(dataset_name, n_epochs_gaussian, n_epochs_data, l
         experiment_config['code_dim']
     )).to(device)
 
+    
+    plt.ylim(0, 1)
     metrics = distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_epochs_gaussian, len_batch, lr, verbose, device, save, LOG_DIR, label)
     plt.plot(range(1, len(metrics[2])+1), metrics[2], label="Accuracy Noise")
 
@@ -174,4 +184,4 @@ def experiment_distil_gaussian(dataset_name, n_epochs_gaussian, n_epochs_data, l
     plt.savefig(os.path.join(LOG_DIR, 'Plots', 'accuracy.png'), dpi=400)
     plt.close()
 
-#experiment_distil_gaussian("MNIST", 50, 50, compare=True, label=False)
+#
