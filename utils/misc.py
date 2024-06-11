@@ -95,6 +95,7 @@ def log_experiment(experiment):
             print("Args:", args)
             print("Kwargs:", kwargs)
             print("\n", end="")
-            experiment(*args, **kwargs, LOG_DIR=log_dir)
+            ret = experiment(*args, **kwargs, LOG_DIR=log_dir)
             print("\nSuccessfully Executed!!")
+            return ret
     return decorator

@@ -45,7 +45,10 @@ def print_top_values(input_file, column_name, top_n_values, target_epsilon=3):
     
     condition = lambda x : x != target_epsilon
     
+    condition2 = lambda x : x <= 0.6
+    
     df = df[~df["target_epsilon"].apply(condition)]
+    df = df[~df["num_correctly_answered"].apply(condition2)]
     
     # Sort the DataFrame by the specified column in descending order
     sorted_df = df.sort_values(by=column_name, ascending=False)
@@ -71,31 +74,13 @@ def run_parameter_search():
     sigma_threshold_list = [50, 80, 120]
     sigma_gnmax_list = [20, 30, 40]
     epsilon_list = [3, 5, 10]
-    delta_list =[10e-5]
+    delta_list =[1e-5]
     num_classes=10
     savepath='./pate_params_new'
     
+    predicted_labels = pate_data.get_argmax_labels(noise_vote_array)
     
-    true_labels=[]
-    device = misc.get_device()
-    experiment_config = conventions.resolve_dataset("noise_MNIST")
-    teacher_name = conventions.resolve_teacher_name(experiment_config)
-    teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","MNIST", teacher_name)
-    teacher_nw = torch.load(teacher_path)
-    teacher_nw.to(device)
-    teacher_nw.train()
-    
-    
-    t,l,r = datasets.get_noise_MNIST_PATE(256)
-    for data, _ in t:
-        data = data.to(device)
-        with torch.no_grad():
-            teacher_output = teacher_nw(data)   
-        label = np.argmax(teacher_output.cpu().numpy(), axis=1)
-        for j in label:
-            true_labels.append(j)
-    
-    pate_main.tune_pate(noise_vote_array, threshold_list, sigma_threshold_list, sigma_gnmax_list, epsilon_list, delta_list, num_classes, savepath, true_labels)
+    pate_main.tune_pate(noise_vote_array, threshold_list, sigma_threshold_list, sigma_gnmax_list, epsilon_list, delta_list, num_classes, savepath, predicted_labels)
     
     
 def test_model_accuracy(model_path, dataset_name):

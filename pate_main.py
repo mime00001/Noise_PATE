@@ -114,7 +114,7 @@ def tune_pate(vote_array, threshold_list, sigma_threshold_list, sigma_gnmax_list
                                                  header=not os.path.isfile(savepath))
 
 
-def inference_pate(vote_array, threshold, sigma_threshold, sigma_gnmax, epsilon, delta, num_classes=10, savepath=''):
+def inference_pate(vote_array, threshold, sigma_threshold, sigma_gnmax, epsilon, delta, num_classes=10, savepath='', save=True):
     """
     This function, given a vote array and the best found hyperparameters infers the teacher's final aggregated private votes.
     It saves them at the save path.
@@ -132,10 +132,10 @@ def inference_pate(vote_array, threshold, sigma_threshold, sigma_gnmax, epsilon,
     achieved_epsilon = get_actually_consumed_epsilon(dp_eps)
     print(achieved_epsilon)
     final_labels = get_final_noisy_labels(noisy_labels, indices_answered, max_num_query)
+    if save:
+        np.save(savepath, final_labels)
     
-    np.save(savepath, final_labels)
-    
-    return final_labels
+    return achieved_epsilon, final_labels
     #pd.DataFrame(final_labels).to_csv(savepath, index=False, header=None)
 
 

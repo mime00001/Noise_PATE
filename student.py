@@ -37,7 +37,7 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
             with torch.no_grad():
                 output = target_nw(data)
     
-    target_nw.eval()
+    #target_nw.eval()
     valid_loss = 0.0
     accs = []
     for data, target in valid_loader:
@@ -110,7 +110,9 @@ def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weig
         experiment_config["code_dim"]
     )).to(device)
     metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=test_loader)
-       
+    
+    ret = metrics[3][-1]
+    
     model_name = conventions.resolve_student_name(experiment_config)
     torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(target_dataset), model_name))
     
@@ -130,6 +132,8 @@ def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weig
     plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_student.png'), dpi=200)
     plt.close()
     print("Student training is finished.")
+    
+    return ret
     
 @misc.log_experiment
 def util_train_student_same_init(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', optimizer="Adam", **kwargs):

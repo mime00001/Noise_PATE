@@ -5,6 +5,7 @@ from utils import help, misc
 import datasets, conventions
 import student
 import models
+import distill_gaussian
 
 import torchvision
 import torchvision.transforms as transforms
@@ -320,3 +321,44 @@ def use_ensemble_argmax():
     plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_student_argmax.png'), dpi=200)
     plt.close()
     print("Student training using argmax is finished.")
+    
+
+def recompute_baseline():
+    batch_size =256
+    num_workers=4
+    
+    device = misc.get_device()
+    experiment_config = conventions.resolve_dataset("noise_MNIST")
+    teacher_name = conventions.resolve_teacher_name(experiment_config)
+    teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","MNIST", teacher_name)
+    teacher_nw = torch.load(teacher_path)
+    teacher_nw.to(device)
+    
+    student_nw = eval("models.{}.Target_Net({}, {})".format(
+        experiment_config['model_student'],
+        experiment_config['inputs'],
+        experiment_config['code_dim']
+    )).to(device)
+    
+    path = LOG_DIR_DATA + "/noise_MNIST.npy"
+    target_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
+    
+    teacher_labels = np.load(target_path)
+    
+    dataset = np.load(path)
+    
+    transform_test = transforms.Compose([
+         transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+    
+    testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    
+    trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(teacher_labels[i])) for i in range(len(dataset)) if teacher_labels[i] != -1]
+    
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    
+    
+    distill_gaussian.distill_using_data(None, teacher_nw=teacher_nw, student_nw=student_nw, valid_loader=valid_loader, train_loader=train_loader)
