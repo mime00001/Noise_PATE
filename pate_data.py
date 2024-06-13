@@ -81,7 +81,7 @@ def create_Gaussian_noise(dataset_name, size):
         
     
 
-def query_teachers_softmax(dataset_name: str, nb_teachers: int):
+def query_teachers_logits(dataset_name: str, nb_teachers: int):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(dataset_name)
     logits = [[] for i in range(nb_teachers)]
@@ -153,7 +153,27 @@ def create_logit_labels(logit_array):
         targets.append(combined_logits)
     
     return targets
-        
+
+def softmax(x):
+    exp_x = np.exp(x - np.max(x))  
+    return exp_x / exp_x.sum(axis=0)
+
+def create_softmax_labels(logit_array):
+    
+    num_samples = logit_array.shape[0]
+    
+    targets = []
+    
+    for sample in logit_array:
+        combined_softmax = softmax(sample[0])
+        for logit in range(1, len(sample)):
+            combined_softmax += softmax(sample[logit])
+        combined_softmax /= len(sample)
+        targets.append(combined_softmax)
+    
+    return targets
+
+
 def get_argmax_labels(vote_array):
     targets = []
     

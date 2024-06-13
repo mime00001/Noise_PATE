@@ -174,13 +174,6 @@ def util_train_teachers_same_init(dataset_name, n_epochs, nb_teachers=50, lr=1e-
     os.makedirs('/disk2/michel/data', exist_ok=True)
     os.makedirs('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), exist_ok=True)
     
-    teacher_model = model = eval("models.{}.Target_Net({}, {})".format(
-            experiment_config['model_teacher'],
-            experiment_config['inputs'],
-            experiment_config['code_dim']
-    )).to(device)
-    
-    torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), "init_model"))
     
     for teacher_id in range(nb_teachers):
         train_loader, _, valid_loader = eval("datasets.get_{}({}, {}, {})".format(

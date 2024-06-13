@@ -43,6 +43,16 @@ class DistillationLoss:
         
         try: return -(teacher * student).sum(dim=1).mean()
         except: print(student); print(teacher)
+    
+class SoftmaxDistillationLoss:
+    def __init__(self, T=1):
+        self.T = T
+
+    def __call__(self, student, teacher):
+        student = F.log_softmax(student/self.T, dim=-1)       
+        
+        try: return -(teacher * student).sum(dim=1).mean()
+        except: print(student); print(teacher)
 
 
 ################################################################

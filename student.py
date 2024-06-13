@@ -37,7 +37,7 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
             with torch.no_grad():
                 output = target_nw(data)
     
-    #target_nw.eval()
+    target_nw.eval()
     valid_loss = 0.0
     accs = []
     for data, target in valid_loader:
@@ -55,11 +55,16 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
 
 
 
-def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim="Adam", label=True, test_loader=None):
-    if label:
+def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim="Adam", loss="xe", label=False, test_loader=None):
+    if loss == "xe":
         criterion = nn.CrossEntropyLoss()
-    else:
+        label=True
+    elif loss == "misc":
         criterion= misc.DistillationLoss()
+        label=False
+    elif loss == "softmax":
+        criterion = misc.SoftmaxDistillationLoss()
+        label=False
     if optim=="SGD":    
         optimizer = SGD(student_nw.parameters(), lr=lr, momentum=0.9, weight_decay=weight_decay)
     elif optim=="Adam":
@@ -71,7 +76,7 @@ def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_d
         patience=10)
     metrics = []
     for epoch in range(1, n_epochs+1):
-        args = train_one_epoch(student_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device, label, test_loader=test_loader)
+        args = train_one_epoch(student_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device, test_loader=test_loader,  label=label)
         if verbose:
             print("Epoch: {} \tTraining Loss: {:.4f} \tTraining Accuracy: {:.4f} \tValidation Loss: {:.4f} \tValidation Accuracy: {:.4f}".format(epoch, *args))
         metrics.append(args)
@@ -79,7 +84,7 @@ def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_d
     return [list(i) for i in zip(*metrics)]
 
 @misc.log_experiment
-def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', optimizer="Adam", use_test_loader=False, **kwargs):
+def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', optimizer="Adam", use_test_loader=False, num_data=0, loss="xe", label=False, **kwargs):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(target_dataset)
     # override
@@ -109,7 +114,7 @@ def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weig
         experiment_config["inputs"],
         experiment_config["code_dim"]
     )).to(device)
-    metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=test_loader)
+    metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=test_loader, num_data=num_data, loss=loss, label=label)
     
     ret = metrics[3][-1]
     
@@ -136,7 +141,7 @@ def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weig
     return ret
     
 @misc.log_experiment
-def util_train_student_same_init(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', optimizer="Adam", **kwargs):
+def util_train_student_same_init(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', optimizer="Adam", use_test_loader=False, **kwargs):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(target_dataset)
     # override
@@ -148,13 +153,25 @@ def util_train_student_same_init(target_dataset, transfer_dataset, n_epochs, lr=
     os.makedirs('/disk2/michel/data', exist_ok=True)
     os.makedirs('/disk2/michel/Pretrained_NW/{}'.format(target_dataset), exist_ok=True)
     
-    train_loader, _, valid_loader = eval("datasets.get_{}_student({})".format(
+    transfer_loader, _, _ = eval("datasets.get_{}_student({})".format(
         transfer_dataset,
         experiment_config["batch_size"]
     ))
+    
+    _, test_loader, target_loader = eval("datasets.get_{}_student({})".format(
+        target_dataset,
+        experiment_config["batch_size"]
+    ))
+    
+    if not use_test_loader:
+        test_loader =None
+    
     student_model = model = torch.load(os.path.join('/disk2/michel/Pretrained_NW/MNIST', "init_model"))
-    metrics = train_student(student_model, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer)
-       
+    metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=test_loader)
+    
+    
+    ret = metrics[3][-1]
+    
     model_name = conventions.resolve_student_name(experiment_config)
     torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(target_dataset), model_name))
     
@@ -173,3 +190,5 @@ def util_train_student_same_init(target_dataset, transfer_dataset, n_epochs, lr=
     plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_student.png'), dpi=200)
     plt.close()
     print("Student training is finished.")
+    
+    return ret

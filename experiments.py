@@ -1,7 +1,8 @@
 import torch.utils
 import torch.utils.data
+import pate_main
 import pate_data
-from utils import help, misc
+from utils import help, misc, teachers
 import datasets, conventions
 import student
 import models
@@ -148,7 +149,7 @@ def use_histogram():
         experiment_config["code_dim"]
     )).to(device)
     
-    metrics = student.train_student(student_model, train_loader, valid_loader, 100, 0.0001, 0, True, device, False, LOG_DIR, optim="Adam", label=False)
+    metrics = student.train_student(student_model, train_loader, valid_loader, 100, 0.0001, 0, True, device, False, LOG_DIR, optim="Adam", label=False, loss="misc")
     
     plt.ylim(0, 1) 
     plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
@@ -167,6 +168,8 @@ def use_histogram():
     plt.close()
     print("Student training using histogram is finished.")
     
+    return metrics[3][-1]
+    
 def use_logits():
     
     batch_size=256
@@ -174,7 +177,7 @@ def use_logits():
     
     
     
-   # noise_vote_array = pate_data.query_teachers_softmax("noise_MNIST", 200)
+    #noise_vote_array = pate_data.query_teachers_logits("noise_MNIST", 200)
     
     noise_vote_array = np.load("/disk2/michel/data/logit_array/noise_MNIST.npy")
     noise_vote_array = np.transpose(noise_vote_array, (1, 0, 2))
@@ -200,9 +203,9 @@ def use_logits():
     
     testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
     
-    #trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(dataset)) if teacher_labels[i] != -1] #use all available datapoints which have been answered by teachers
+    trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(dataset)) if teacher_labels[i] != -1] #use all available datapoints which have been answered by teachers
     
-    trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(12000)]
+    #trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(12000)]
     
     num_samples = len(trainset)
     
@@ -228,7 +231,7 @@ def use_logits():
         experiment_config["code_dim"]
     )).to(device)
     
-    metrics = student.train_student(student_model, train_loader, valid_loader, 50, 0.001, 0, True, device, False, LOG_DIR, optim="Adam", label=False)
+    metrics = student.train_student(student_model, train_loader, valid_loader, 50, 0.001, 0, True, device, False, LOG_DIR, optim="Adam", label=False, loss="misc")
        
     plt.ylim(0, 1)
     plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
@@ -247,6 +250,91 @@ def use_logits():
     plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_student_logits.png'), dpi=200)
     plt.close()
     print("Student training using logits is finished.")
+    
+    return metrics[3][-1]
+
+def use_softmax():
+    
+    batch_size=256
+    num_workers=4
+    
+    
+    
+    #noise_vote_array = pate_data.query_teachers_logits("noise_MNIST", 200)
+    
+    noise_vote_array = np.load("/disk2/michel/data/logit_array/noise_MNIST.npy")
+    noise_vote_array = np.transpose(noise_vote_array, (1, 0, 2))
+    
+    noise_label_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
+    pate_labels = np.load(noise_label_path)
+    
+    targets = pate_data.create_softmax_labels(noise_vote_array)
+    
+    path = LOG_DIR_DATA + "/noise_MNIST.npy"
+    target_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
+    
+    
+    teacher_labels = np.load(target_path)
+    dataset = np.load(path)
+    
+    assert len(dataset) == len(targets), "size of dataset and teacher labels does not match"
+    
+    transform_test = transforms.Compose([
+         transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+    
+    testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    
+    trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(dataset)) if teacher_labels[i] != -1] #use all available datapoints which have been answered by teachers
+    
+    #trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(12000)]
+    
+    num_samples = len(trainset)
+    
+    print(len(trainset))
+    
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    
+    device = misc.get_device()
+    experiment_config = conventions.resolve_dataset("noise_MNIST")
+    # override
+    
+    print('Experiment Configuration:')
+    print(experiment_config)
+
+    os.makedirs('/disk2/michel/data', exist_ok=True)
+    os.makedirs('/disk2/michel/Pretrained_NW/{}'.format("noise_MNIST"), exist_ok=True)
+    
+    student_model = model = eval("models.{}.Target_Net({}, {})".format(
+        experiment_config["model_student"],
+        experiment_config["inputs"],
+        experiment_config["code_dim"]
+    )).to(device)
+    
+    metrics = student.train_student(student_model, train_loader, valid_loader, 50, 0.001, 0, True, device, False, LOG_DIR, optim="Adam", label=False, loss="softmax")
+       
+    plt.ylim(0, 1)
+    plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
+    plt.plot(range(1, len(metrics[3])+1), metrics[3], label="Valid Accuracy")
+    
+    plt.title('Student Training using softmax and {} samples'.format(num_samples))
+    plt.legend()
+    plt.savefig(os.path.join(LOG_DIR, 'Plots', 'accuracy_student_softmax.png'), dpi=200)
+    plt.close()
+
+    plt.plot(range(1, len(metrics[0])+1), metrics[0], label="Train Loss")
+    plt.plot(range(1, len(metrics[2])+1), metrics[2], label="Valid Loss")
+
+    plt.title('Student Training using softmax and {} samples'.format(num_samples))
+    plt.legend()
+    plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_student_softmax.png'), dpi=200)
+    plt.close()
+    print("Student training using softmax is finished.")
+    
+    return metrics[3][-1]
 
 def use_ensemble_argmax():
     
@@ -362,3 +450,72 @@ def recompute_baseline():
     
     
     distill_gaussian.distill_using_data(None, teacher_nw=teacher_nw, student_nw=student_nw, valid_loader=valid_loader, train_loader=train_loader)
+    
+
+def betterFMNIST():
+    batch_size = 256
+    num_workers = 4
+    validation_size = 0.2
+    """ transform_train = transform=transforms.Compose([
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
+    ])
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
+    ])
+
+    trainset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
+    testset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    
+    end = int(len(testset)*(1-validation_size))
+    
+    partition_train = [testset[i] for i in range(end)]
+    partition_test = [testset[i] for i in range(end, len(testset))]
+    
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+
+    device = misc.get_device()
+    experiment_config = conventions.resolve_dataset("MNIST")
+    labels = [[] for i in range(200)]
+    
+    testdata = next(iter(train_loader))[0].numpy()
+    for i in range(200):
+        print("querying teacher {}".format(i))
+        teacher_name = conventions.resolve_teacher_name(experiment_config)
+        teacher_name += "_{}".format(i)
+        LOG_DIR = '/disk2/michel/Pretrained_NW'
+        teacher_path = os.path.join(LOG_DIR, "MNIST", teacher_name)
+        teacher_nw = torch.load(teacher_path)
+        teacher_nw = teacher_nw.to(device)
+        
+        teacher_nw.train() #set model to training mode, batchnorm trick
+        
+        testindex = 0
+        for data, _ in train_loader:
+            if testindex == 0:
+                assert np.array_equal(testdata, data.numpy()), "first element is not the same in data, problem with dataloader"
+            testindex+=1
+            data = data.to(device)
+            with torch.no_grad():
+                teacher_output = teacher_nw(data)   
+            label = np.argmax(teacher_output.cpu().numpy(), axis=1)
+            for j in label:
+                labels[i].append(j)
+     """
+    path = LOG_DIR_DATA + "/vote_array/{}".format("FMNIST.npy")
+    f_vote_array = np.load(path)
+
+    f_vote_array = f_vote_array.T
+    
+    path2 = LOG_DIR_DATA + "/teacher_labels/{}".format("FMNIST.npy")
+
+    FMNIST_list=[]
+    epsilon_list = [20]
+    for eps in epsilon_list:
+        achieved_eps, pate_labels = pate_main.inference_pate(vote_array=f_vote_array, threshold=150, sigma_threshold=120, sigma_gnmax=40, epsilon=eps, delta=1e-5, num_classes=10, save=True, savepath=path2)
+        final_acc = student.util_train_student(target_dataset="MNIST", transfer_dataset="FMNIST", n_epochs=50, use_test_loader=True, optimizer="Adam")
+        FMNIST_list.append((achieved_eps, final_acc))
