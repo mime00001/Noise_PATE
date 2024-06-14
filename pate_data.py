@@ -31,12 +31,17 @@ def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int):
         teacher_name = conventions.resolve_teacher_name(experiment_config)
         teacher_name += "_{}".format(i)
         LOG_DIR = '/disk2/michel/Pretrained_NW'
-        if target_dataset == "noise_MNIST":
+        
+        if "noise_" in target_dataset:
+            target_dataset = target_dataset.replace("noise_", "")
+        
+        """ if target_dataset == "noise_MNIST":
             teacher_path = os.path.join(LOG_DIR, "MNIST", teacher_name)
         elif target_dataset == "noise_CIFAR10":
             teacher_path = os.path.join(LOG_DIR, "CIFAR10", teacher_name)
-        else:
-            teacher_path = os.path.join(LOG_DIR, target_dataset, teacher_name)
+        else: """
+        
+        teacher_path = os.path.join(LOG_DIR, target_dataset, teacher_name)
         teacher_nw = torch.load(teacher_path)
         teacher_nw = teacher_nw.to(device)
         

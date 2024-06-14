@@ -28,32 +28,33 @@ import pandas as pd
 
 LOG_DIR_DATA = "/disk2/michel/data"
     
-def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200, use_test_loader=True, params=None, train_teachers=False):
+def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200, use_test_loader=True, params=None, train_teachers=False, compare=True):
     
     
     #params = {"threshold": 150, "sigma_threshold": 50, "sigma_gnmax": 20, "epsilon": 26, "delta" : 1e-5}
     
     if not params:
-        params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 26, "delta" : 1e-5}
+        params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-5}
     
     #first train teachers on dataset
     if train_teachers:
-        teachers.util_train_teachers_same_init(dataset_name=target_dataset, n_epochs=75, nb_teachers=nb_teachers)
+        teachers.util_train_teachers_same_init(dataset_name=target_dataset, n_epochs=75, nb_teachers=nb_teachers, initialize=True)
     
-    #then query teachers for student labels
+    if compare:
+        #then query teachers for student labels
     
-    vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=target_dataset, nb_teachers=nb_teachers)
-    
-    #then perform inference PATE
-    
-    vote_array=vote_array.T
-    label_path = LOG_DIR_DATA + "/teacher_labels/MNIST.npy"
-    pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=label_path)
-    
-    #then train student on the noisy teacher labels for baseline
-    
-    student.util_train_student(target_dataset=target_dataset, transfer_dataset=target_dataset, n_epochs=100)
-    
+        vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=target_dataset, nb_teachers=nb_teachers)
+        
+        #then perform inference PATE
+        
+        vote_array=vote_array.T
+        label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(target_dataset)
+        pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=label_path)
+        
+        #then train student on the noisy teacher labels for baseline
+        
+        data_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=target_dataset, n_epochs=100, loss="xe")
+        
     #then create Gaussian data
     
     pate_data.create_Gaussian_noise(target_dataset, 60000)
@@ -70,7 +71,12 @@ def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200,
     
     
     #then train the student on Gaussian noise    
-    student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=60, lr=0.001, optimizer="Adam", kwargs=params, use_test_loader=use_test_loader)
+    transfer_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=100, lr=0.001, optimizer="Adam", kwargs=params,  loss="xe")
+    
+    if compare:
+        print(f"Accuracy with data: {data_acc} and accuracy with transfer set: {transfer_acc}")
+    else:
+        print(f"Accuracy with transfer dataset: {transfer_acc}")
 
 
 def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb_teachers=200, params=None, use_test_loader=True):
@@ -96,4 +102,4 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
 
 
 if __name__ == '__main__':
-    datasets.get_SVHN(256, 0, 1)
+    full_run("SVHN", "noise_SVHN", nb_teachers=200, use_test_loader=False, train_teachers=True, compare=True)

@@ -23,6 +23,15 @@ def resolve_dataset(dataset_name):
         experiment_config['inputs'] = 1
         experiment_config['channels'] = 1
         experiment_config['batch_size'] = 256
+        
+    if dataset_name=='SVHN':
+        experiment_config['code_dim'] = 10
+        experiment_config['model_teacher'] = "resnet9"
+        experiment_config['model_student'] = "resnet9"
+        experiment_config['inputs'] = 3
+        experiment_config['channels'] = 3
+        experiment_config['batch_size'] = 256
+    
     return experiment_config
 
 

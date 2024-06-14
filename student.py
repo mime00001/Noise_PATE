@@ -37,7 +37,7 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
             with torch.no_grad():
                 output = target_nw(data)
     
-    target_nw.eval()
+    
     valid_loss = 0.0
     accs = []
     for data, target in valid_loader:

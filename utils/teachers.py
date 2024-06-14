@@ -162,7 +162,7 @@ def train_specific_teacher(teacher_id, dataset_name, n_epochs, nb_teachers=50, l
     
     
 @misc.log_experiment
-def util_train_teachers_same_init(dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', **kwargs):
+def util_train_teachers_same_init(dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/',initialize =False,**kwargs):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(dataset_name)
     # override
@@ -174,6 +174,25 @@ def util_train_teachers_same_init(dataset_name, n_epochs, nb_teachers=50, lr=1e-
     os.makedirs('/disk2/michel/data', exist_ok=True)
     os.makedirs('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), exist_ok=True)
     
+    
+    try:
+        model = torch.load(os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), "init_model"))
+    except:
+        print("init model initialized")
+        teacher_model = model = eval("models.{}.Target_Net({}, {})".format(
+            experiment_config['model_teacher'],
+            experiment_config['inputs'],
+            experiment_config['code_dim']
+        )).to(device)
+        torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), "init_model"))
+    
+    if initialize:
+        teacher_model = model = eval("models.{}.Target_Net({}, {})".format(
+            experiment_config['model_teacher'],
+            experiment_config['inputs'],
+            experiment_config['code_dim']
+        )).to(device)
+        torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(dataset_name), "init_model"))
     
     for teacher_id in range(nb_teachers):
         train_loader, _, valid_loader = eval("datasets.get_{}({}, {}, {})".format(
