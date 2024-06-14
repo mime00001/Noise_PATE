@@ -519,3 +519,25 @@ def betterFMNIST():
         achieved_eps, pate_labels = pate_main.inference_pate(vote_array=f_vote_array, threshold=150, sigma_threshold=120, sigma_gnmax=40, epsilon=eps, delta=1e-5, num_classes=10, save=True, savepath=path2)
         final_acc = student.util_train_student(target_dataset="MNIST", transfer_dataset="FMNIST", n_epochs=50, use_test_loader=True, optimizer="Adam")
         FMNIST_list.append((achieved_eps, final_acc))
+
+def normalize_SVHN(trainset, testset):
+    data_r =  np.dstack([trainset[i][0][:,:,0] for i in range(len(trainset))])
+    data_g =  np.dstack([trainset[i][0][:,:,1] for i in range(len(trainset))])
+    data_b =  np.dstack([trainset[i][0][:,:,2] for i in range(len(trainset))])
+
+    mean = np.mean(data_r), np.mean(data_g), np.mean(data_b)
+    std = np.std(data_r), np.std(data_g), np.std(data_b)
+
+    print(mean)
+    print(std)
+    
+    data_r =  np.dstack([testset[i][0][:,:,0] for i in range(len(testset))])
+    data_g =  np.dstack([testset[i][0][:,:,1] for i in range(len(testset))])
+    data_b =  np.dstack([testset[i][0][:,:,2] for i in range(len(testset))])
+
+    mean = np.mean(data_r), np.mean(data_g), np.mean(data_b)
+    std = np.std(data_r), np.std(data_g), np.std(data_b)
+
+    print(mean)
+    print(std)
+

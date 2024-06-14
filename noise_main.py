@@ -96,4 +96,4 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
 
 
 if __name__ == '__main__':
-    plots.create_forth_table()
+    datasets.get_SVHN(256, 0, 1)
