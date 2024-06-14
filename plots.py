@@ -192,7 +192,7 @@ def create_forth_table():
     
     params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-5}
     
-    num_datapoints = [0, 2000, 4000, 6000, 8000, 10000]
+    num_datapoints = [0, 2000, 4000, 6000, 8000, 10000, 15000, 20000]
     
     
     accuracies = []
