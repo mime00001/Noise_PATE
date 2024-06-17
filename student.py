@@ -84,7 +84,7 @@ def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_d
     return [list(i) for i in zip(*metrics)]
 
 @misc.log_experiment
-def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', optimizer="Adam", use_test_loader=False, num_data=0, loss="xe", label=False, **kwargs):
+def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', optimizer="Adam", use_test_loader=False, loss="xe", label=False, **kwargs):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(target_dataset)
     # override
@@ -114,7 +114,7 @@ def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weig
         experiment_config["inputs"],
         experiment_config["code_dim"]
     )).to(device)
-    metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=test_loader, num_data=num_data, loss=loss, label=label)
+    metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=test_loader, loss=loss, label=label)
     
     ret = metrics[3][-1]
     

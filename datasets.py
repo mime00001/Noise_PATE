@@ -509,7 +509,7 @@ def get_SVHN_student(batch_size, validation_size=0.2):
     ])
 
     trainset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="train", download=True, transform=transform_train) #, transform=transform_train
-    testset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="test", download=True, transform=transform) #, transform=transform_test
+    testset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="test", download=True, transform=transform_test) #, transform=transform_test
 
     end = int(len(testset)*(1-validation_size))
     
@@ -519,9 +519,6 @@ def get_SVHN_student(batch_size, validation_size=0.2):
     
     partition_train = [[testset[i][0], torch.tensor(teacher_labels[i])] for i in range(end) if teacher_labels[i]!= -1] #remove all datapoints, where we have no answer from the teacher ensemble
     partition_test = [testset[i] for i in range(end, len(testset))]
-        
-    print("Number of samples for student training: {}".format(len(partition_train)))
-    
     
     train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
@@ -545,7 +542,7 @@ def get_noise_SVHN_student(batch_size, validation_size=0.2):
         transforms.Normalize((0.45207793, 0.45359373, 0.45602703), (0.22993235, 0.229334, 0.2311905)),
     ])
     
-    testset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    testset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="test", download=True, transform=transform_test)
     
     trainset = [(torch.FloatTensor(dataset[i]), torch.tensor(targets[i])) for i in range(len(dataset)) if targets[i] != -1] #also need to recheck if we need this
     

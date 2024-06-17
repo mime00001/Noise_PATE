@@ -80,11 +80,11 @@ def create_Gaussian_noise(dataset_name, size):
         path = LOG_DIR_DATA + "/noise_MNIST"
         np.save(path, data, allow_pickle=True)
     elif dataset_name == "CIFAR10":
-        data = np.random.normal(0.0, 1.0, (size, 32, 32, 3))
+        data = np.random.normal(0.0, 1.0, (size, 3, 32, 32))
         path = LOG_DIR_DATA + "/noise_CIFAR10"
         np.save(path, data, allow_pickle=True)
     elif dataset_name == "SVHN":
-        data = np.random.normal(0.0, 1.0, (size, 32, 32, 3))
+        data = np.random.normal(0.0, 1.0, (size, 3, 32, 32))
         path = LOG_DIR_DATA + "/noise_SVHN"
         np.save(path, data, allow_pickle=True)
         
