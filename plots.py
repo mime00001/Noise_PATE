@@ -4,7 +4,9 @@ import student
 from utils import teachers, misc
 import conventions
 import datasets, models
+import distill_gaussian
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import torch, torchvision
@@ -269,3 +271,68 @@ def create_forth_table():
     plt.grid(True)
     plt.savefig('table 4.png')
     
+    
+def create_kd_data_plot():
+    
+    params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-5}
+    
+    num_datapoints = [2048, 4096, 6144, 8192, 10240, 15000, 20000]
+    
+    
+    accuracies = []
+    
+    device = misc.get_device()
+    experiment_config = conventions.resolve_dataset("MNIST")
+    
+    batch_size=256
+    num_workers=4
+    validation_size=0.2
+    LOG_DIR = "/disk2/michel/"
+    
+    transform_train=transforms.Compose([
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+    
+    trainset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
+    testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    
+    metrics_list = []
+    
+    for n in num_datapoints:
+        partition_train = [trainset[i] for i in range(len(n))]
+        valid_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+        
+        
+        teacher_name = conventions.resolve_teacher_name(experiment_config)
+        teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","{}".format("MNIST"), teacher_name)
+        teacher_nw = torch.load(teacher_path)
+        teacher_nw.to(device)
+
+        student_nw = eval("models.{}.Target_Net({}, {})".format(
+            experiment_config['model_student'],
+            experiment_config['inputs'],
+            experiment_config['code_dim']
+        )).to(device)
+        
+        len_batch = len(valid_loader)
+        
+        m = distill_gaussian.distill_using_noise(None, teacher_nw, student_nw, valid_loader, 75, len_batch, 1e-3, True, device, False, LOG_DIR, label=False, test_loader=None)
+        metrics_list.append(m)
+        
+    plt.ylim(0, 1)
+    for i, metrics in enumerate(metrics_list):
+        samples = num_datapoints[i]
+        plt.plot(range(1, len(metrics[2])+1), metrics[2], label=f"Accuracy with {samples}")
+    
+    plt.title('Knowledge Distillation with set number of samples')
+    plt.xlabel('Number of datapoints')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.savefig("plot 1.png")
+    plt.close()
