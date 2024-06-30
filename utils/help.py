@@ -63,20 +63,18 @@ def print_top_values(input_file, column_name, top_n_values, target_epsilon=3):
 
 def run_parameter_search():
     
-    noise_vote_array_path = LOG_DIR_DATA +  "/vote_array/noise_MNIST.npy"
-
-    noise_label_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
+    noise_vote_array_path = LOG_DIR_DATA +  "/vote_array/noise_SVHN.npy"
     
     noise_vote_array = np.load(noise_vote_array_path)
     noise_vote_array=noise_vote_array.T
     
-    threshold_list = [80, 100, 120, 150]
-    sigma_threshold_list = [50, 80, 120]
-    sigma_gnmax_list = [20, 30, 40]
+    threshold_list = [190, 250, 300]
+    sigma_threshold_list = [100, 150, 200]
+    sigma_gnmax_list = [30, 40, 50]
     epsilon_list = [3, 5, 10]
-    delta_list =[1e-5]
+    delta_list =[1e-6]
     num_classes=10
-    savepath='./pate_params_new'
+    savepath='./pate_params_SVHN'
     
     predicted_labels = pate_data.get_argmax_labels(noise_vote_array)
     

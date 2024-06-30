@@ -69,7 +69,7 @@ def compare_ensemble_output(length):
         print(" Predicted label by ensemble: {}".format(int(predicted_labels[i])))
         
         
-def plot_count_histogram(title="consensus_same_init.png", votearray_path="/disk2/michel/data/vote_array/noise_MNIST.npy"):
+def plot_count_histogram(title="consensus_same_init_SVHN.png", votearray_path="/disk2/michel/data/vote_array/noise_SVHN.npy"):
     """Experiment, to plot the histograms of the ensemble consensus. The idea is to then train teachers with the same initialization and check if the consensus changes.
 
     Args:

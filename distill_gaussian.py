@@ -11,10 +11,10 @@ from torch.optim import Adam
 import torch.nn.functional as F
 
 import models
-from models import mnistresnet
+from models import mnistresnet, resnet9, resnet12
 import datasets
 import conventions
-from utils import misc
+from utils import misc, teachers
 
 LOG_DIR = "/disk2/michel/"
 
@@ -70,8 +70,6 @@ def distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_ep
     optimizer = Adam(student_nw.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
     metrics = []
-
-    torch.manual_seed(42)
     
     data_sample = next(iter(valid_loader))[0]
     
@@ -151,7 +149,7 @@ def experiment_distil_gaussian(target_dataset, transfer_dataset, n_epochs_gaussi
         transfer_dataset,
         experiment_config['batch_size'],
         0,
-        60
+        5
     ))
     
     
@@ -159,13 +157,14 @@ def experiment_distil_gaussian(target_dataset, transfer_dataset, n_epochs_gaussi
         target_dataset,
         experiment_config['batch_size'],
         0,
-        6
+        5
     ))
 
     len_batch = len(train_loader)
+    print(len_batch*256)
 
     teacher_name = conventions.resolve_teacher_name(experiment_config)
-    teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","MNIST", teacher_name)
+    teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","{}".format(target_dataset), teacher_name)
     teacher_nw = torch.load(teacher_path)
     teacher_nw.to(device)
 
@@ -193,5 +192,4 @@ def experiment_distil_gaussian(target_dataset, transfer_dataset, n_epochs_gaussi
     plt.savefig(os.path.join(LOG_DIR, 'Plots', 'accuracy.png'), dpi=400)
     plt.close()
 
-
-
+#experiment_distil_gaussian("SVHN", "SVHN", 50, 50, lr=1e-3, compare=True, verbose=True, label=True)

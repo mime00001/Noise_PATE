@@ -66,7 +66,7 @@ def get_CIFAR10(batch_size, teacher_id, nb_teachers, valid_size=0.2):
     trainset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
     testset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test) #, transform=transform_test
     batch_len = int(len(trainset) / nb_teachers)
-    assert batch_len >= batch_size
+    assert batch_len >= batch_size, f"len trainset {len(trainset)} and batchlen {batch_len}"
     
     start = teacher_id * batch_len
     end = (teacher_id+1) * batch_len
@@ -158,8 +158,10 @@ def get_SVHN(batch_size, teacher_id, nb_teachers, valid_size=0.2):
 
     trainset= ConcatDataset([trainset, extraset])
 
+    
+
     batch_len = int(len(trainset) / nb_teachers)
-    assert batch_len >= batch_size
+    assert batch_len >= batch_size, f"length of trainset {len(trainset)}, batch len: {batch_len}"
     
     start = teacher_id * batch_len
     end = (teacher_id+1) * batch_len
@@ -196,10 +198,10 @@ def get_CIFAR10_PATE(batch_size, validation_size=0.2):
     trainset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
     testset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test) #, transform=transform_test
     
-    end = int(len(testset)*(1-validation_size))
+    end = int(len(trainset)*(1-validation_size))
     
-    partition_train = [testset[i] for i in range(end)]
-    partition_test = [testset[i] for i in range(end, len(testset))]
+    partition_train = [trainset[i] for i in range(end)]
+    partition_test = [trainset[i] for i in range(end, len(trainset))]
     
     train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers)
     valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers)
@@ -348,15 +350,16 @@ def get_CIFAR10_student(batch_size, validation_size=0.2):
     trainset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
     testset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test) #, transform=transform_test
     
-    end = int(len(testset)*(1-validation_size))
+    end = int(len(trainset)*(1-validation_size))
     
     target_path = LOG_DIR_DATA + "/teacher_labels/CIFAR10.npy"
     
     teacher_labels = np.load(target_path)
     
-    partition_train = [[testset[i][0], torch.tensor(teacher_labels[i])] for i in range(end) if teacher_labels[i]!= -1] #remove all datapoints, where we have no answer from the teacher ensemble
-    partition_test = [testset[i] for i in range(end, len(testset))]
+    partition_train = [[trainset[i][0], torch.tensor(teacher_labels[i])] for i in range(end) if teacher_labels[i]!= -1] #remove all datapoints, where we have no answer from the teacher ensemble
+    partition_test = [trainset[i] for i in range(end, len(trainset))]
         
+    print("Number of samples for student training: {}".format(len(partition_train)))
     
     train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
@@ -520,6 +523,8 @@ def get_SVHN_student(batch_size, validation_size=0.2):
     partition_train = [[testset[i][0], torch.tensor(teacher_labels[i])] for i in range(end) if teacher_labels[i]!= -1] #remove all datapoints, where we have no answer from the teacher ensemble
     partition_test = [testset[i] for i in range(end, len(testset))]
     
+    print("Number of samples for student training: {}".format(len(partition_train)))
+    
     train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=True)
@@ -546,7 +551,7 @@ def get_noise_SVHN_student(batch_size, validation_size=0.2):
     
     trainset = [(torch.FloatTensor(dataset[i]), torch.tensor(targets[i])) for i in range(len(dataset)) if targets[i] != -1] #also need to recheck if we need this
     
-    print("Number of samples for student training: {}".format(len(trainset)))
+    print("Number of noisy samples for student training: {}".format(len(trainset)))
     
     train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
