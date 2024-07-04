@@ -69,32 +69,39 @@ def compare_ensemble_output(length):
         print(" Predicted label by ensemble: {}".format(int(predicted_labels[i])))
         
         
-def plot_count_histogram(title="consensus_same_init_SVHN.png", votearray_path="/disk2/michel/data/vote_array/noise_SVHN.npy"):
+def plot_count_histogram(title="consensus_same_init_SVHN.png", votearray_path="/disk2/michel/data/vote_array/noise_MNIST.npy", ylim=0.05, histogram_values_path=None):
     """Experiment, to plot the histograms of the ensemble consensus. The idea is to then train teachers with the same initialization and check if the consensus changes.
 
     Args:
         title (str, optional): Title of the histogram.
         votearray_path (str, optional): Path to the vote array, which is output by the teachers. Defaults to "/disk2/michel/data/vote_array/noise_MNIST.npy".
     """
-    
-    noise_vote_array = np.load(votearray_path)
-    vote_array=noise_vote_array.T
-          
-    histogram_values = []
-    
-    for i in range(len(vote_array)):
-        uniques, counts = np.unique(vote_array[i], return_counts=True)
-        count_most_frequent = counts[np.argmax(counts)]
+    if votearray_path:
+        noise_vote_array = np.load(votearray_path)
+        vote_array=noise_vote_array.T
+            
+        histogram_values = []
         
-        histogram_values.append(count_most_frequent)
+        for i in range(len(vote_array)):
+            uniques, counts = np.unique(vote_array[i], return_counts=True)
+            count_most_frequent = counts[np.argmax(counts)]
+            
+            histogram_values.append(count_most_frequent)
+    else:
+        histogram_values = np.load(histogram_values_path)
     
         
     plt.hist(histogram_values, bins=240, density=True)
-    plt.ylabel("Occurence of highest counts")
-    plt.xlabel("Highest consensus of teachers")
+    plt.ylim(0, 0.05)
+    plt.xlim(20, 180)
+    plt.ylabel("Occurence")
+    plt.xlabel("Number of teachers that agree on final label")
     plt.title("Consensus of teachers")
     plt.savefig(os.path.join(LOG_DIR, 'Plots', title), dpi=200)
     
+    arr = np.array(histogram_values)
+    save_path = title.replace(".png", "")
+    np.save(os.path.join(LOG_DIR, 'Plots', save_path), arr)
     
     
 def use_histogram():

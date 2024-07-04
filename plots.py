@@ -19,12 +19,13 @@ def create_first_table():
     nb_teachers=200
     
     params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 5, "delta" : 1e-5}
+    fmnist_params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": 5, "delta" : 1e-5}
     
-    #vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=target_dataset, nb_teachers=nb_teachers)
+    vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=target_dataset, nb_teachers=nb_teachers)
     
-    #noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset="noise_MNIST", nb_teachers=nb_teachers)
+    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset="noise_MNIST", nb_teachers=nb_teachers)
     
-    #f_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset="FMNIST", nb_teachers=nb_teachers)
+    f_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset="FMNIST", nb_teachers=nb_teachers)
     
     #then perform inference PATE
     vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format("MNIST"))
@@ -44,25 +45,28 @@ def create_first_table():
     fmnist_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format("FMNIST")
     epsilon_list = [5, 8, 10, 20]
     
-    public_list=[]
-    gaussian_list=[]
-    FMNIST_list=[]
-    
-    for eps in epsilon_list:
-        #public data
-        achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
-        final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=target_dataset, n_epochs=50)
-        public_list.append((achieved_eps, final_acc))
-        
-        #gaussian noise
-        achieved_eps, pate_labels = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=noise_label_path)
-        final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset="noise_MNIST", n_epochs=50)
-        gaussian_list.append((achieved_eps, final_acc))
-        
-        #fmnist
-        achieved_eps, pate_labels = pate_main.inference_pate(vote_array=f_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=fmnist_label_path)
-        final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset="FMNIST", n_epochs=50)
-        FMNIST_list.append((achieved_eps, final_acc))
+    public_list=[[] for e in epsilon_list]
+    gaussian_list=[[] for e in epsilon_list]
+    FMNIST_list=[[] for e in epsilon_list]
+    for j in range(5):
+        for i, eps in enumerate(epsilon_list):
+            #public data
+            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
+            num_answered = (pate_labels != -1).sum()
+            final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=target_dataset, n_epochs=50)
+            public_list[i].append((round(achieved_eps, 3), round(final_acc, 3), num_answered))
+            
+            #gaussian noise
+            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=noise_label_path)
+            final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset="noise_MNIST", n_epochs=50)
+            num_answered = (pate_labels != -1).sum()
+            gaussian_list[i].append((round(achieved_eps, 3), round(final_acc, 3), num_answered))
+            
+            #fmnist
+            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=f_vote_array, threshold=fmnist_params["threshold"], sigma_threshold=fmnist_params["sigma_threshold"], sigma_gnmax=fmnist_params["sigma_gnmax"], epsilon=eps, delta=fmnist_params["delta"], num_classes=10, savepath=fmnist_label_path)
+            final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset="FMNIST", n_epochs=50)
+            num_answered = (pate_labels != -1).sum()
+            FMNIST_list[i].append((round(achieved_eps, 3), round(final_acc, 3), num_answered))
         
         
     print("public data list")
@@ -71,18 +75,18 @@ def create_first_table():
     print("gaussian list")
     print(gaussian_list)
     
-    print("public data list")
+    print("fmnist data list")
     print(FMNIST_list)
     
     headers = ['eps=5', 'eps=8', "eps=10", "eps=20"]
     row_labels = [ "public_data", "Gaussian noise", "FMNIST data"]
     values = [
-        [public_list[0], public_list[1], public_list[2], public_list[3]],
-        [gaussian_list[0], gaussian_list[1], gaussian_list[2], gaussian_list[3]],
-        [FMNIST_list[0], FMNIST_list[1], FMNIST_list[2], FMNIST_list[3]]
+        [(np.mean(public_list[0], axis=0), np.std(public_list[0], axis=0)), (np.mean(public_list[1], axis=0), np.std(public_list[1], axis=0)), (np.mean(public_list[2], axis=0), np.std(public_list[2], axis=0)), (np.mean(public_list[3], axis=0), np.std(public_list[3], axis=0))],
+        [(np.mean(gaussian_list[0], axis=0), np.std(gaussian_list[0], axis=0)), (np.mean(gaussian_list[1], axis=0), np.std(gaussian_list[1], axis=0)), (np.mean(gaussian_list[2], axis=0), np.std(gaussian_list[2], axis=0)), (np.mean(gaussian_list[3], axis=0), np.std(gaussian_list[3], axis=0))],
+        [(np.mean(FMNIST_list[0], axis=0), np.std(FMNIST_list[0], axis=0)), (np.mean(FMNIST_list[1], axis=0), np.std(FMNIST_list[1], axis=0)), (np.mean(FMNIST_list[2], axis=0), np.std(FMNIST_list[2], axis=0)), (np.mean(FMNIST_list[3], axis=0), np.std(FMNIST_list[3], axis=0))]
     ]
     
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(50, 30))
 
     # Hide the axes
     ax.xaxis.set_visible(False)
@@ -96,7 +100,7 @@ def create_first_table():
     plt.subplots_adjust(left=0.2, top=0.8)
 
     # Save the table to a file
-    plt.savefig('table 1.png')
+    plt.savefig('table 1_std.png')
 
 
 def create_second_table():
@@ -161,17 +165,35 @@ def create_second_table():
     plt.savefig('table 2.png')
 
 def create_third_table():
-    #noise_vote_array = pate_data.query_teachers(target_dataset="MNIST", query_dataset="noise_MNIST", nb_teachers=200)
-    histogram_acc = experiments.use_histogram()
-    logits_acc = experiments.use_logits()
-    label_acc = student.util_train_student(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60, lr=0.001, optimizer="Adam", use_test_loader=False, loss="xe", label=True)
-    softmax_acc = experiments.use_softmax()
+    
+    noise_vote_array = pate_data.query_teachers(target_dataset="MNIST", query_dataset="noise_MNIST", nb_teachers=200).T
+    params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-5}
+    
+    #then perform inference pate
+    noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format("noise_MNIST")
+    noise_votes = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path) 
+    
+    h=[]
+    lo = []
+    la = []
+    s = []
+    
+    for i in range(5):
+        histogram_acc = experiments.use_histogram()
+        logits_acc = experiments.use_logits()
+        label_acc = student.util_train_student(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60, lr=0.001, optimizer="Adam", use_test_loader=False, loss="xe", label=True)
+        softmax_acc = experiments.use_softmax()
+        
+        h.append(histogram_acc)
+        lo.append(logits_acc)
+        la.append(label_acc)
+        s.append(softmax_acc)
 
 
 
     values = [
         ["label_acc", "histogram_acc", "softmax_acc", "logits_acc"],
-        [label_acc, histogram_acc, softmax_acc, logits_acc]
+        [(np.mean(la), np.std(la)), (np.mean(h), np.std(h)), (np.mean(s), np.std(s)), (np.mean(lo), np.std(lo))]
     ]
 
     fig, ax = plt.subplots()
@@ -302,10 +324,11 @@ def create_kd_data_plot():
     trainset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
     testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
     
-    metrics_list = []
+    metrics_list_label = []
+    metrics_list_logits = []
     
     for n in num_datapoints:
-        partition_train = [trainset[i] for i in range(len(n))]
+        partition_train = [trainset[i] for i in range(n)]
         valid_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
         
         
@@ -322,17 +345,59 @@ def create_kd_data_plot():
         
         len_batch = len(valid_loader)
         
-        m = distill_gaussian.distill_using_noise(None, teacher_nw, student_nw, valid_loader, 75, len_batch, 1e-3, True, device, False, LOG_DIR, label=False, test_loader=None)
-        metrics_list.append(m)
+        m = distill_gaussian.distill_using_noise(None, teacher_nw, student_nw, valid_loader, 75, len_batch, 1e-3, True, device, False, LOG_DIR, label=True, test_loader=None)
+        metrics_list_label.append(m[2][-1])
         
+        m = distill_gaussian.distill_using_noise(None, teacher_nw, student_nw, valid_loader, 75, len_batch, 1e-3, True, device, False, LOG_DIR, label=False, test_loader=None)
+        metrics_list_logits.append(m[2][-1])
+    
+    
+    valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    len_batch=len(valid_loader)
+        
+    teacher_name = conventions.resolve_teacher_name(experiment_config)
+    teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","{}".format("MNIST"), teacher_name)
+    teacher_nw = torch.load(teacher_path)
+    teacher_nw.to(device)
+
+    student_nw = eval("models.{}.Target_Net({}, {})".format(
+        experiment_config['model_student'],
+        experiment_config['inputs'],
+        experiment_config['code_dim']
+    )).to(device)
+
+    
+    
+    base_line_logits = distill_gaussian.distill_using_noise(None, teacher_nw, student_nw, valid_loader, 75, len_batch, 1e-3, True, device, False, LOG_DIR, label=False, test_loader=None, different_noise=True)[2][-1]
+    base_line_label = distill_gaussian.distill_using_noise(None, teacher_nw, student_nw, valid_loader, 75, len_batch, 1e-3, True, device, False, LOG_DIR, label=True, test_loader=None, different_noise=True)[2][-1]
+    
     plt.ylim(0, 1)
-    for i, metrics in enumerate(metrics_list):
-        samples = num_datapoints[i]
-        plt.plot(range(1, len(metrics[2])+1), metrics[2], label=f"Accuracy with {samples}")
+    
+    
+    plt.plot(num_datapoints, metrics_list_label, label=f"Accuracy with label", color="tab:blue")
+    plt.plot(num_datapoints, metrics_list_logits, label=f"Accuracy with logits", color="tab:orange")
+    plt.axhline(base_line_label, color="b", linestyle="--", label="Baseline for labels")
+    plt.axhline(base_line_logits, color="r", linestyle="--", label="Baseline for logits")
     
     plt.title('Knowledge Distillation with set number of samples')
-    plt.xlabel('Number of datapoints')
+    plt.xlabel('Number of samples')
     plt.ylabel('Accuracy')
     plt.legend()
     plt.savefig("plot 1.png")
     plt.close()
+    
+    
+def consensus_plots_MNIST():
+    
+    #teachers.util_train_teachers("MNIST", 60, 200)
+    
+    #pate_data.query_teachers("MNIST", "noise_MNIST", 200)
+    
+    experiments.plot_count_histogram("consensus_diff_noiseMNIST.png", "/disk2/michel/data/vote_array/noise_MNIST.npy")
+    
+    teachers.util_train_teachers_same_init("MNIST", 75, 200)
+    
+    pate_data.query_teachers("MNIST", "noise_MNIST", 200)
+    
+    experiments.plot_count_histogram("consensus_same_noiseMNIST.png", "/disk2/michel/data/vote_array/noise_MNIST.npy")
+    

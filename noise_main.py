@@ -84,10 +84,12 @@ def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200,
         print(f"Accuracy with transfer dataset: {transfer_acc}")
 
 
-def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb_teachers=200, params=None, use_test_loader=False, epsilon=10):
+def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb_teachers=200, params=None, use_test_loader=False, epsilon=20):
     
     if not params:
-        if target_dataset =="MNIST": 
+        if transfer_dataset=="FMNIST":
+            params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": epsilon, "delta" : 1e-5}
+        elif target_dataset =="MNIST": 
             params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset=="SVHN":
             params = {"threshold": 300, "sigma_threshold": 200, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-6}
@@ -100,12 +102,12 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
     
     #then perform inference pate
     noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(transfer_dataset)
-    noise_votes = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path) 
-    
+    eps, noise_votes = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path) 
+    num_answered = (noise_votes != -1).sum()
     
     #then train the student on Gaussian noise    
-    finalacc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=80, lr=0.001, optimizer="Adam", kwargs=params, use_test_loader=use_test_loader)
-    return finalacc
+    finalacc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params, use_test_loader=use_test_loader)
+    return finalacc, num_answered
     
 
 
@@ -113,9 +115,67 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
 if __name__ == '__main__':
     params = {"threshold": 190, "sigma_threshold": 100, "sigma_gnmax": 50, "epsilon": 10, "delta" : 1e-6}
     
-    only_transfer_set("SVHN", "noise_SVHN", 250, params=None, epsilon=10)
-    #help.run_parameter_search()
-    #help.print_top_values("pate_params_SVHN", "num_answered", 10, 10)
+    np.set_printoptions(suppress=True)
+    
+    eps = [5, 8, 10, 20]
+    
+    FMNIST_list=[[] for e in eps]
+    
+    
+    for i in range(5):
+        for j, e in enumerate(eps):
+            f, n = only_transfer_set("MNIST", "FMNIST", epsilon=e)
+            FMNIST_list[j].append((f, n))
+    
+    
+    
+    values = [
+        [np.mean(FMNIST_list[0], axis=0), np.mean(FMNIST_list[1], axis=0), np.mean(FMNIST_list[2], axis=0), np.mean(FMNIST_list[3], axis=0)],
+        [np.std(FMNIST_list[0], axis=0) , np.std(FMNIST_list[1], axis=0), np.std(FMNIST_list[2], axis=0), np.std(FMNIST_list[3], axis=0)]
+    ]
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    headers = ['eps=5', 'eps=8', "eps=10", "eps=20"]
+    row_labels = [ "mean", "std"]
+
+    # Hide the axes
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    ax.set_frame_on(False)
+
+    # Create the table
+    table = ax.table(cellText=values, colLabels=headers, rowLabels=row_labels, loc='center', cellLoc='center')
+
+    # Adjust layout
+    plt.subplots_adjust(left=0.2, top=0.8)
+
+    # Save the table to a file
+    plt.savefig('table 1_fmnist.png')
+    #help.run_parameter_search("/vote_array/FMNIST.npy", "./pate_params_FMNIST")
+    
+    
+    
+    #plots.create_kd_data_plot()
+    #help.test_model_accuracy("/disk2/michel/Pretrained_NW/MNIST/teacher_MNIST_mnistresnet.model", "MNIST")
+    
+    #plots.create_first_table()
+    #plots.create_third_table()
+    
+    #help.table1_help()
+    
+    #help.print_top_values("pate_params_FMNIST", "num_correctly_answered", 5, 10)
+    
+    #help.show_images(10)
+    
+    #plots.consensus_plots_MNIST()
+    
+    
+    #help.consensus_calculations()
+    #help.consensus_calculations(path="/disk2/michel/Plots/consensus_same_noiseMNIST.npy")
+    
+    #only_transfer_set("SVHN", "noise_SVHN", 250, params=None, epsilon=10)
+
+
     
     
     

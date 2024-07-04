@@ -65,7 +65,7 @@ def distill_using_data(teacher_nw, student_nw, train_loader, valid_loader, n_epo
     return [list(i) for i in zip(*metrics)]  # train_loss, valid_loss, valid_acc
 
 
-def distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_epochs, len_batch, lr, verbose, device, save, LOG_DIR, label=False, test_loader=None):
+def distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_epochs, len_batch, lr, verbose, device, save, LOG_DIR, label=False, test_loader=None, different_noise=False):
     print("\nDistillation using Gaussian noise..")
     optimizer = Adam(student_nw.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
@@ -86,7 +86,10 @@ def distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_ep
         train_loss = 0.0
         for b in batch:
             optimizer.zero_grad()
-            data = b
+            if different_noise:
+                data = torch.randn_like(data_sample, device=device)
+            else:
+                data = b
             with torch.no_grad():
                 teacher_output = teacher_nw(data)
             student_output = student_nw(data)

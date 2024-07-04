@@ -11,6 +11,8 @@ import pate_data
 import pate_main
 import distill_gaussian
 
+import matplotlib.pyplot as plt
+from PIL import Image
 import datasets
 import torchvision
 import torchvision.transforms as transforms
@@ -24,6 +26,7 @@ import pandas as pd
 
 
 LOG_DIR_DATA = "/disk2/michel/data"
+LOG_DIR = "/disk2/michel"
 
 
 def remove_rows(input_file, output_file, column_name, condition):
@@ -61,22 +64,22 @@ def print_top_values(input_file, column_name, top_n_values, target_epsilon=3):
     print(top_n_df)
 
 
-def run_parameter_search():
+def run_parameter_search(path="/vote_array/noise_SVHN.npy", savepath="./pate_params", predicted_labels=None):
     
-    noise_vote_array_path = LOG_DIR_DATA +  "/vote_array/noise_SVHN.npy"
+    noise_vote_array_path = LOG_DIR_DATA +  path
     
     noise_vote_array = np.load(noise_vote_array_path)
     noise_vote_array=noise_vote_array.T
     
-    threshold_list = [190, 250, 300]
-    sigma_threshold_list = [100, 150, 200]
-    sigma_gnmax_list = [30, 40, 50]
+    threshold_list = [120, 150, 180, 200] #
+    sigma_threshold_list = [100, 120, 150] # 
+    sigma_gnmax_list = [20, 30, 40]
     epsilon_list = [3, 5, 10]
-    delta_list =[1e-6]
+    delta_list =[1e-5]
     num_classes=10
-    savepath='./pate_params_SVHN'
     
     predicted_labels = pate_data.get_argmax_labels(noise_vote_array)
+    
     
     pate_main.tune_pate(noise_vote_array, threshold_list, sigma_threshold_list, sigma_gnmax_list, epsilon_list, delta_list, num_classes, savepath, predicted_labels)
     
@@ -181,5 +184,110 @@ def test_ensemble_accuracy(dataset_name):
     return percentage
 
 
-
+def count_answered_labels(teacher_label_path=None):
     
+    if not teacher_label_path:
+        teacher_label_path = LOG_DIR_DATA + "/teacher_labels/MNIST.npy"
+    
+    teacher_labels = np.load(teacher_label_path)
+    
+    mask = teacher_labels != -1
+    
+    count = mask.sum()
+    print(count)
+
+
+def show_images(num=5):
+    teacher_label_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
+    data_path = LOG_DIR_DATA + "/noise_MNIST.npy"
+    
+    teacher_labels = np.load(teacher_label_path)
+    data = np.load(data_path)
+    val=0
+    
+    for i, im in enumerate(data):    
+        if val==num:
+            break
+        if teacher_labels[i] != -1:
+            min_val = im.min()
+            max_val = im.max()
+            normalized_array = ((im - min_val) / (max_val - min_val) * 255).astype(np.uint8)
+            
+            new_image = Image.fromarray(normalized_array, mode="L")
+            save_path = LOG_DIR + "/Images/new"+ str(i)+".jpeg"
+            
+            new_image.save(save_path)
+            val+=1
+    
+def consensus_calculations(path="/disk2/michel/Plots/consensus_diff_noiseMNIST.npy"):
+    arr = np.load(path)
+    
+    print(f"mean: {np.mean(arr)}")
+    print(f"meadian: {np.median(arr)}")
+    print(f"max: {np.amax(arr)}")
+    print(f"min: {np.amin(arr)}")
+    print(f"std: {np.std(arr)}")
+    
+    
+    
+def table1_help():
+    
+    np.set_printoptions(suppress=True)
+    
+    public_list= [[(5.0, 0.95, 2989), (5.0, 0.967, 2983), (5.0, 0.961, 2936), (5.0, 0.96, 2897), (5.0, 0.961, 2906)], [(6.476, 0.972, 4712), (6.476, 0.961, 4756), (6.476, 0.968, 4700), (6.476, 0.962, 4670), (6.476, 0.958, 4647)], [(6.476, 0.959, 4699), (6.476, 0.97, 4670), (6.476, 0.961, 4705), (6.476, 0.968, 4652), (6.476, 0.965, 4659)], [(6.476, 0.962, 4703), (6.476, 0.968, 4653), (6.476, 0.959, 4761), (6.476, 0.966, 4666), (6.476, 0.966, 4734)]]
+    gaussian_list = [[(5.0, 0.354, 1228), (5.0, 0.374, 1226), (5.0, 0.419, 1208), (5.0, 0.398, 1256), (5.0, 0.349, 1184)], [(8.0, 0.524, 2698), (8.0, 0.478, 2662), (8.0, 0.506, 2681), (8.0, 0.515, 2708), (8.0, 0.523, 2746)], [(10.0, 0.515, 3874), (10.0, 0.549, 3842), (10.0, 0.557, 3913), (10.0, 0.566, 4087), (10.0, 0.586, 4041)], [(20.0, 0.765, 11592), (20.0, 0.747, 11833), (20.0, 0.718, 11804), (20.0, 0.777, 11834), (20.0, 0.724, 11748)]]
+    FMNIST_list = [[(5.0, 0.461, 1774), (5.0, 0.452, 1762), (5.0, 0.505, 1742), (5.0, 0.456, 1782), (5.0, 0.483, 1801)], [(8.0, 0.525, 4039), (8.0, 0.547, 4068), (8.0, 0.535, 4003), (8.0, 0.527, 3990), (8.0, 0.568, 3989)], [(10.0, 0.61, 5821), (10.0, 0.579, 5843), (10.0, 0.607, 5800), (10.0, 0.63, 5837), (10.0, 0.57, 5866)], [(20.0, 0.678, 17734), (20.0, 0.672, 17573), (20.0, 0.685, 17505), (20.0, 0.658, 17586), (20.0, 0.686, 17620)]]
+    
+    headers = ['eps=5', 'eps=8', "eps=10", "eps=20"]
+    row_labels = [ "public_data", "Gaussian noise", "FMNIST data"]
+    values = [
+        [(np.mean(public_list[0], axis=0), np.std(public_list[0], axis=0)), (np.mean(public_list[1], axis=0), np.std(public_list[1], axis=0)), (np.mean(public_list[2], axis=0), np.std(public_list[2], axis=0)), (np.mean(public_list[3], axis=0), np.std(public_list[3], axis=0))],
+        [(np.mean(gaussian_list[0], axis=0), np.std(gaussian_list[0], axis=0)), (np.mean(gaussian_list[1], axis=0), np.std(gaussian_list[1], axis=0)), (np.mean(gaussian_list[2], axis=0), np.std(gaussian_list[2], axis=0)), (np.mean(gaussian_list[3], axis=0), np.std(gaussian_list[3], axis=0))],
+        [(np.mean(FMNIST_list[0], axis=0), np.std(FMNIST_list[0], axis=0)), (np.mean(FMNIST_list[1], axis=0), np.std(FMNIST_list[1], axis=0)), (np.mean(FMNIST_list[2], axis=0), np.std(FMNIST_list[2], axis=0)), (np.mean(FMNIST_list[3], axis=0), np.std(FMNIST_list[3], axis=0))]
+    ]
+    
+    cellText1 = [[] for i in range(3)]
+    cellText2 = [[] for i in range(3)]
+    
+    for i, v in enumerate(values):
+        for mean_std in v:
+            m, s = mean_std
+            #m, s = np.asarray(m), np.asarray(s)
+            cellText1[i].append(f"{m.round(3)}")
+            cellText2[i].append(f"{s.round(3)}")
+        
+            
+    fig, ax = plt.subplots(figsize=(20, 10))
+
+    # Hide the axes
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    ax.set_frame_on(False)
+
+    # Create the table
+    table = ax.table(cellText=cellText1, colLabels=headers, rowLabels=row_labels, loc='center', cellLoc='center')
+    table.set_fontsize(20)
+
+    # Adjust layout
+    plt.subplots_adjust(left=0.2, top=0.8)
+
+    # Save the table to a file
+    plt.savefig('table 1_mean.png')
+    
+    
+    fig, ax = plt.subplots()
+
+    # Hide the axes
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    ax.set_frame_on(False)
+
+    # Create the table
+    table = ax.table(cellText=cellText2, colLabels=headers, rowLabels=row_labels, loc='center', cellLoc='center')
+    table.set_fontsize(16)
+
+    # Adjust layout
+    plt.subplots_adjust(left=0.2, top=0.8)
+
+    # Save the table to a file
+    plt.savefig('table 1_std.png')
