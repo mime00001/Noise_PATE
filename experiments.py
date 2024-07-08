@@ -92,8 +92,8 @@ def plot_count_histogram(title="consensus_same_init_SVHN.png", votearray_path="/
     
         
     plt.hist(histogram_values, bins=240, density=True)
-    plt.ylim(0, 0.05)
-    plt.xlim(20, 180)
+    """ plt.ylim(0, 0.05)
+    plt.xlim(20, 180) """
     plt.ylabel("Occurence")
     plt.xlabel("Number of teachers that agree on final label")
     plt.title("Consensus of teachers")

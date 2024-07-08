@@ -71,11 +71,11 @@ def run_parameter_search(path="/vote_array/noise_SVHN.npy", savepath="./pate_par
     noise_vote_array = np.load(noise_vote_array_path)
     noise_vote_array=noise_vote_array.T
     
-    threshold_list = [120, 150, 180, 200] #
-    sigma_threshold_list = [100, 120, 150] # 
-    sigma_gnmax_list = [20, 30, 40]
-    epsilon_list = [3, 5, 10]
-    delta_list =[1e-5]
+    threshold_list = [150, 250, 280, 300] #
+    sigma_threshold_list = [100, 150, 200] # 
+    sigma_gnmax_list = [20, 40, 50]
+    epsilon_list = [20]
+    delta_list =[1e-6]
     num_classes=10
     
     predicted_labels = pate_data.get_argmax_labels(noise_vote_array)
@@ -197,27 +197,55 @@ def count_answered_labels(teacher_label_path=None):
     print(count)
 
 
-def show_images(num=5):
-    teacher_label_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
-    data_path = LOG_DIR_DATA + "/noise_MNIST.npy"
+def show_images(num=5, padding=1):
+    teacher_label_path = LOG_DIR_DATA + "/teacher_labels/noise_SVHN.npy"
+    data_path = LOG_DIR_DATA + "/noise_SVHN.npy"
     
     teacher_labels = np.load(teacher_label_path)
     data = np.load(data_path)
     val=0
     
-    for i, im in enumerate(data):    
+    labels=[]
+    
+    images=[]
+    for i, im in enumerate(data):   
+         
         if val==num:
             break
         if teacher_labels[i] != -1:
-            min_val = im.min()
-            max_val = im.max()
+            min_val = im.min(axis=(1, 2), keepdims=True) #axis=(0, 1), keepdims=True
+            max_val = im.max(axis=(1, 2), keepdims=True)
             normalized_array = ((im - min_val) / (max_val - min_val) * 255).astype(np.uint8)
+        
+            new_image = Image.fromarray(normalized_array.transpose(1, 2, 0), mode="RGB")
+            save_path = LOG_DIR + "/Images/SVHN"+ str(i)+".jpeg"
             
-            new_image = Image.fromarray(normalized_array, mode="L")
-            save_path = LOG_DIR + "/Images/new"+ str(i)+".jpeg"
+            labels.append(teacher_labels[i])
             
             new_image.save(save_path)
+            images.append(new_image)
             val+=1
+            
+    num_rows = 2
+    num_cols = (num + 1) // 2
+    width, height = images[0].size
+    print(images[0].size)
+    total_width = num_cols * width + (num_cols - 1) * padding
+    total_height = num_rows * height + (num_rows - 1) * padding
+    
+    grid_image = Image.new('RGB', size=(total_width, total_height), color=(255, 255, 255))
+    
+    for idx, img in enumerate(images):
+        row = idx // num_cols
+        col = idx % num_cols
+        x = col * (width + padding)
+        y = row * (height + padding)
+        grid_image.paste(img, (x, y))
+    
+    save_path = os.path.join(LOG_DIR, "Images", "SVHN_grid.jpeg")
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    grid_image.save(save_path)
+    print(labels)
     
 def consensus_calculations(path="/disk2/michel/Plots/consensus_diff_noiseMNIST.npy"):
     arr = np.load(path)
