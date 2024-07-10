@@ -15,8 +15,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-LOG_DIR_DATA = "/disk2/michel/data"
-LOG_DIR = "/disk2/michel/"
+LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR = "/storage3/michel"
 
 def compare_ensemble_output(length):
     
@@ -34,7 +34,7 @@ def compare_ensemble_output(length):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset("noise_MNIST")
     teacher_name = conventions.resolve_teacher_name(experiment_config)
-    teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","MNIST", teacher_name)
+    teacher_path = os.path.join(LOG_DIR, "Pretrained_NW","MNIST", teacher_name)
     teacher_nw = torch.load(teacher_path)
     teacher_nw.to(device)
     teacher_nw.train()
@@ -69,7 +69,7 @@ def compare_ensemble_output(length):
         print(" Predicted label by ensemble: {}".format(int(predicted_labels[i])))
         
         
-def plot_count_histogram(title="consensus_same_init_SVHN.png", votearray_path="/disk2/michel/data/vote_array/noise_MNIST.npy", ylim=0.05, histogram_values_path=None):
+def plot_count_histogram(title="consensus_same_init_SVHN.png", votearray_path="/storage3/michel/data/vote_array/noise_MNIST.npy", ylim=0.05, histogram_values_path=None):
     """Experiment, to plot the histograms of the ensemble consensus. The idea is to then train teachers with the same initialization and check if the consensus changes.
 
     Args:
@@ -92,8 +92,8 @@ def plot_count_histogram(title="consensus_same_init_SVHN.png", votearray_path="/
     
         
     plt.hist(histogram_values, bins=240, density=True)
-    """ plt.ylim(0, 0.05)
-    plt.xlim(20, 180) """
+    plt.ylim(0, 0.3)
+    plt.xlim(20, 200) 
     plt.ylabel("Occurence")
     plt.xlabel("Number of teachers that agree on final label")
     plt.title("Consensus of teachers")
@@ -110,7 +110,7 @@ def use_histogram():
     num_workers=4
     
     
-    noise_vote_array = np.load("/disk2/michel/data/vote_array/noise_MNIST.npy")
+    noise_vote_array = np.load("/storage3/michel/data/vote_array/noise_MNIST.npy")
     noise_vote_array = noise_vote_array.T
     
     targets = pate_data.create_histogram_labels(noise_vote_array)
@@ -147,8 +147,8 @@ def use_histogram():
     print('Experiment Configuration:')
     print(experiment_config)
 
-    os.makedirs('/disk2/michel/data', exist_ok=True)
-    os.makedirs('/disk2/michel/Pretrained_NW/{}'.format("noise_MNIST"), exist_ok=True)
+    os.makedirs('/storage3/michel/data', exist_ok=True)
+    os.makedirs('/storage3/michel/Pretrained_NW/{}'.format("noise_MNIST"), exist_ok=True)
     
     student_model = model = eval("models.{}.Target_Net({}, {})".format(
         experiment_config["model_student"],
@@ -186,7 +186,7 @@ def use_logits():
     
     #noise_vote_array = pate_data.query_teachers_logits("noise_MNIST", 200)
     
-    noise_vote_array = np.load("/disk2/michel/data/logit_array/noise_MNIST.npy")
+    noise_vote_array = np.load("/storage3/michel/data/logit_array/noise_MNIST.npy")
     noise_vote_array = np.transpose(noise_vote_array, (1, 0, 2))
     
     noise_label_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
@@ -229,8 +229,8 @@ def use_logits():
     print('Experiment Configuration:')
     print(experiment_config)
 
-    os.makedirs('/disk2/michel/data', exist_ok=True)
-    os.makedirs('/disk2/michel/Pretrained_NW/{}'.format("noise_MNIST"), exist_ok=True)
+    os.makedirs(LOG_DIR_DATA, exist_ok=True)
+    os.makedirs(LOG_DIR +'/Pretrained_NW/{}'.format("noise_MNIST"), exist_ok=True)
     
     student_model = model = eval("models.{}.Target_Net({}, {})".format(
         experiment_config["model_student"],
@@ -269,7 +269,7 @@ def use_softmax():
     
     #noise_vote_array = pate_data.query_teachers_logits("noise_MNIST", 200)
     
-    noise_vote_array = np.load("/disk2/michel/data/logit_array/noise_MNIST.npy")
+    noise_vote_array = np.load(LOG_DIR_DATA + "/logit_array/noise_MNIST.npy")
     noise_vote_array = np.transpose(noise_vote_array, (1, 0, 2))
     
     noise_label_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
@@ -312,8 +312,8 @@ def use_softmax():
     print('Experiment Configuration:')
     print(experiment_config)
 
-    os.makedirs('/disk2/michel/data', exist_ok=True)
-    os.makedirs('/disk2/michel/Pretrained_NW/{}'.format("noise_MNIST"), exist_ok=True)
+    os.makedirs(LOG_DIR_DATA, exist_ok=True)
+    os.makedirs(LOG_DIR + '/Pretrained_NW/{}'.format("noise_MNIST"), exist_ok=True)
     
     student_model = model = eval("models.{}.Target_Net({}, {})".format(
         experiment_config["model_student"],
@@ -348,7 +348,7 @@ def use_ensemble_argmax():
     batch_size=256
     num_workers=4
     
-    noise_vote_array = np.load("/disk2/michel/data/vote_array/noise_MNIST.npy")
+    noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/noise_MNIST.npy")
     noise_vote_array = noise_vote_array.T
     
     path = LOG_DIR_DATA + "/noise_MNIST.npy"
@@ -389,8 +389,8 @@ def use_ensemble_argmax():
     print('Experiment Configuration:')
     print(experiment_config)
 
-    os.makedirs('/disk2/michel/data', exist_ok=True)
-    os.makedirs('/disk2/michel/Pretrained_NW/{}'.format("noise_MNIST"), exist_ok=True)
+    os.makedirs(LOG_DIR_DATA, exist_ok=True)
+    os.makedirs(LOG_DIR + '/Pretrained_NW/{}'.format("noise_MNIST"), exist_ok=True)
     
     student_model = model = eval("models.{}.Target_Net({}, {})".format(
         experiment_config["model_student"],
@@ -425,7 +425,7 @@ def recompute_baseline():
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset("noise_MNIST")
     teacher_name = conventions.resolve_teacher_name(experiment_config)
-    teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","MNIST", teacher_name)
+    teacher_path = os.path.join(LOG_DIR, "Pretrained_NW","MNIST", teacher_name)
     teacher_nw = torch.load(teacher_path)
     teacher_nw.to(device)
     

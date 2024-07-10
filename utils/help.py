@@ -25,8 +25,8 @@ from utils import misc
 import pandas as pd
 
 
-LOG_DIR_DATA = "/disk2/michel/data"
-LOG_DIR = "/disk2/michel"
+LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR = "/storage3/michel/"
 
 
 def remove_rows(input_file, output_file, column_name, condition):

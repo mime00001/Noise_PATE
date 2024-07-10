@@ -92,7 +92,7 @@ def log_experiment(experiment):
     # A decorator to log everything to a file
     def decorator(*args, **kwargs):
         time_now = datetime.datetime.now().strftime("%d %B %Y, %I.%M%p")
-        experiment_dir = "/disk2/michel/Logs/{}".format(experiment.__name__)
+        experiment_dir = "/storage3/michel/Logs/{}".format(experiment.__name__)
         log_dir = os.path.join(experiment_dir, time_now)
         plots_dir = os.path.join(log_dir, "Plots")
         log_file = os.path.join(log_dir, "log.txt")

@@ -16,7 +16,7 @@ import datasets
 import conventions
 from utils import misc, teachers
 
-LOG_DIR = "/disk2/michel/"
+LOG_DIR = "/storage3/michel/"
 
 criterion = misc.DistillationLoss()
 xe = nn.CrossEntropyLoss(reduction='mean')
@@ -167,7 +167,7 @@ def experiment_distil_gaussian(target_dataset, transfer_dataset, n_epochs_gaussi
     print(len_batch*256)
 
     teacher_name = conventions.resolve_teacher_name(experiment_config)
-    teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","{}".format(target_dataset), teacher_name)
+    teacher_path = os.path.join(LOG_DIR, "Pretrained_NW","{}".format(target_dataset), teacher_name)
     teacher_nw = torch.load(teacher_path)
     teacher_nw.to(device)
 

@@ -9,7 +9,7 @@ import tensorflow as tf
 
 torch.manual_seed(42)
 
-LOG_DIR_DATA = "/disk2/michel/data"
+LOG_DIR_DATA = "/storage3/michel/data"
 
 def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int):
     """queries the teacher ensemble for labels about a specific dataset
@@ -30,7 +30,7 @@ def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int):
         print("querying teacher {}".format(i))
         teacher_name = conventions.resolve_teacher_name(experiment_config)
         teacher_name += "_{}".format(i)
-        LOG_DIR = '/disk2/michel/Pretrained_NW'
+        LOG_DIR = '/storage3/michel/Pretrained_NW'
         
         if "noise_" in target_dataset:
             target_dataset = target_dataset.replace("noise_", "")
@@ -97,7 +97,7 @@ def query_teachers_logits(dataset_name: str, nb_teachers: int):
         print("querying teacher {}".format(i))
         teacher_name = conventions.resolve_teacher_name(experiment_config)
         teacher_name += "_{}".format(i)
-        LOG_DIR = '/disk2/michel/Pretrained_NW'
+        LOG_DIR = '/storage3/michel/Pretrained_NW'
         if dataset_name == "noise_MNIST":
             teacher_path = os.path.join(LOG_DIR, "MNIST", teacher_name)
         elif dataset_name == "noise_CIFAR10":

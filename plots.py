@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 import torch, torchvision
 import torchvision.transforms as transforms
 
-LOG_DIR_DATA = "/disk2/michel/data"
+LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR = "/storage3/michel"
 
 def create_first_table():
     target_dataset = "MNIST"
@@ -275,7 +276,7 @@ def create_forth_table():
             experiment_config["code_dim"]
         )).to(device)
         
-        metrics = student.train_student(student_model, transfer_loader, test_loader, 60, 0.001, 0, True, device, False,LOG_DIR="/disk2/michel/", optim="Adam", test_loader=valid_loader, loss="xe", label=True)
+        metrics = student.train_student(student_model, transfer_loader, test_loader, 60, 0.001, 0, True, device, False,LOG_DIR="/storage3/michel/", optim="Adam", test_loader=valid_loader, loss="xe", label=True)
         
         acc=metrics[3][-1]
     
@@ -308,8 +309,7 @@ def create_kd_data_plot():
     
     batch_size=256
     num_workers=4
-    validation_size=0.2
-    LOG_DIR = "/disk2/michel/"
+    validation_size=0.2 
     
     transform_train=transforms.Compose([
         transforms.ToTensor(), # first, convert image to PyTorch tensor
@@ -333,7 +333,7 @@ def create_kd_data_plot():
         
         
         teacher_name = conventions.resolve_teacher_name(experiment_config)
-        teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","{}".format("MNIST"), teacher_name)
+        teacher_path = os.path.join(LOG_DIR, "Pretrained_NW","{}".format("MNIST"), teacher_name)
         teacher_nw = torch.load(teacher_path)
         teacher_nw.to(device)
 
@@ -356,7 +356,7 @@ def create_kd_data_plot():
     len_batch=len(valid_loader)
         
     teacher_name = conventions.resolve_teacher_name(experiment_config)
-    teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","{}".format("MNIST"), teacher_name)
+    teacher_path = os.path.join(LOG_DIR, "Pretrained_NW","{}".format("MNIST"), teacher_name)
     teacher_nw = torch.load(teacher_path)
     teacher_nw.to(device)
 
@@ -393,13 +393,13 @@ def consensus_plots_MNIST():
     
     #pate_data.query_teachers("MNIST", "noise_MNIST", 200)
     
-    experiments.plot_count_histogram("consensus_diff_noiseMNIST.png", "/disk2/michel/data/vote_array/noise_MNIST.npy")
+    experiments.plot_count_histogram("consensus_diff_noiseMNIST.png", "/storage3/michel/data/vote_array/noise_MNIST.npy")
     
     teachers.util_train_teachers_same_init("MNIST", 75, 200)
     
     pate_data.query_teachers("MNIST", "noise_MNIST", 200)
     
-    experiments.plot_count_histogram("consensus_same_noiseMNIST.png", "/disk2/michel/data/vote_array/noise_MNIST.npy")
+    experiments.plot_count_histogram("consensus_same_noiseMNIST.png", "/storage3/michel/data/vote_array/noise_MNIST.npy")
 
 
 def FMNIST_plot():
@@ -575,7 +575,6 @@ def create_kd_data_plot_SVHN():
     batch_size=256
     num_workers=4
     validation_size=0.2
-    LOG_DIR = "/disk2/michel/"
     
     transform_train = transforms.Compose([
         transforms.ToTensor(),
@@ -599,7 +598,7 @@ def create_kd_data_plot_SVHN():
         
         
         teacher_name = conventions.resolve_teacher_name(experiment_config)
-        teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","{}".format("SVHN"), teacher_name)
+        teacher_path = os.path.join(LOG_DIR, "Pretrained_NW","{}".format("SVHN"), teacher_name)
         teacher_nw = torch.load(teacher_path)
         teacher_nw.to(device)
 
@@ -622,7 +621,7 @@ def create_kd_data_plot_SVHN():
     len_batch=len(valid_loader)
         
     teacher_name = conventions.resolve_teacher_name(experiment_config)
-    teacher_path = os.path.join("/disk2/michel", "Pretrained_NW","{}".format("SVHN"), teacher_name)
+    teacher_path = os.path.join(LOG_DIR, "Pretrained_NW","{}".format("SVHN"), teacher_name)
     teacher_nw = torch.load(teacher_path)
     teacher_nw.to(device)
 
