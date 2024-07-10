@@ -17,6 +17,7 @@ from utils import misc
 
 
 LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR_MODEL = "/storage3/michel/"
 LOG_DIR = "/storage3/michel/"
 
 def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device):
@@ -81,7 +82,7 @@ def util_train_teachers(dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_
     print(experiment_config)
 
     os.makedirs(LOG_DIR_DATA, exist_ok=True)
-    os.makedirs(LOG_DIR + "/Pretrained_NW/{}".format(dataset_name), exist_ok=True)
+    os.makedirs(LOG_DIR_MODEL + "/Pretrained_NW/{}".format(dataset_name), exist_ok=True)
     
     for teacher_id in range(nb_teachers):
         train_loader, _, valid_loader = eval("datasets.get_{}({}, {}, {})".format(
@@ -100,7 +101,7 @@ def util_train_teachers(dataset_name, n_epochs, nb_teachers=50, lr=1e-3, weight_
         model_name = conventions.resolve_teacher_name(experiment_config)
         if nb_teachers!=1:
             model_name+="_{}".format(teacher_id)
-        torch.save(model, os.path.join(LOG_DIR, 'Pretrained_NW/{}'.format(dataset_name), model_name))
+        torch.save(model, os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), model_name))
         
         plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
         plt.plot(range(1, len(metrics[3])+1), metrics[3], label="Valid Accuracy")
@@ -129,7 +130,7 @@ def train_specific_teacher(teacher_id, dataset_name, n_epochs, nb_teachers=50, l
     print(experiment_config)
 
     os.makedirs(LOG_DIR_DATA, exist_ok=True)
-    os.makedirs(LOG_DIR + '/Pretrained_NW/{}'.format(dataset_name), exist_ok=True)
+    os.makedirs(LOG_DIR_MODEL + '/Pretrained_NW/{}'.format(dataset_name), exist_ok=True)
     train_loader, _, valid_loader = eval("datasets.get_{}({}, {}, {})".format(
             dataset_name,
             experiment_config['batch_size'],
@@ -145,7 +146,7 @@ def train_specific_teacher(teacher_id, dataset_name, n_epochs, nb_teachers=50, l
     
     model_name = conventions.resolve_teacher_name(experiment_config)
     model_name+="_{}".format(teacher_id)
-    torch.save(model, os.path.join(LOG_DIR, 'Pretrained_NW/{}'.format(dataset_name), model_name))
+    torch.save(model, os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), model_name))
     plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
     plt.plot(range(1, len(metrics[3])+1), metrics[3], label="Valid Accuracy")
     plt.title('Teacher Training teacher{}'.format(teacher_id))
@@ -174,11 +175,11 @@ def util_train_teachers_same_init(dataset_name, n_epochs, nb_teachers=50, lr=1e-
     print(experiment_config)
 
     os.makedirs(LOG_DIR_DATA, exist_ok=True)
-    os.makedirs(LOG_DIR + '/Pretrained_NW/{}'.format(dataset_name), exist_ok=True)
+    os.makedirs(LOG_DIR_MODEL + '/Pretrained_NW/{}'.format(dataset_name), exist_ok=True)
     
     
     try:
-        model = torch.load(os.path.join(LOG_DIR, 'Pretrained_NW/{}'.format(dataset_name), "init_model"))
+        model = torch.load(os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), "init_model"))
     except:
         print("init model initialized")
         teacher_model = model = eval("models.{}.Target_Net({}, {})".format(
@@ -186,7 +187,7 @@ def util_train_teachers_same_init(dataset_name, n_epochs, nb_teachers=50, lr=1e-
             experiment_config['inputs'],
             experiment_config['code_dim']
         )).to(device)
-        torch.save(model, os.path.join(LOG_DIR, 'Pretrained_NW/{}'.format(dataset_name), "init_model"))
+        torch.save(model, os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), "init_model"))
     
     if initialize:
         teacher_model = model = eval("models.{}.Target_Net({}, {})".format(
@@ -194,7 +195,7 @@ def util_train_teachers_same_init(dataset_name, n_epochs, nb_teachers=50, lr=1e-
             experiment_config['inputs'],
             experiment_config['code_dim']
         )).to(device)
-        torch.save(model, os.path.join(LOG_DIR, 'Pretrained_NW/{}'.format(dataset_name), "init_model"))
+        torch.save(model, os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), "init_model"))
     
     for teacher_id in range(nb_teachers):
         train_loader, _, valid_loader = eval("datasets.get_{}({}, {}, {})".format(
@@ -204,14 +205,14 @@ def util_train_teachers_same_init(dataset_name, n_epochs, nb_teachers=50, lr=1e-
             nb_teachers
         ))
         
-        teacher_model = model = torch.load(os.path.join(LOG_DIR, 'Pretrained_NW/{}'.format(dataset_name), "init_model"))
+        teacher_model = model = torch.load(os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), "init_model"))
         
         metrics = train_teacher(teacher_model, teacher_id, nb_teachers,  train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR)
         
         model_name = conventions.resolve_teacher_name(experiment_config)
         if nb_teachers!=1:
             model_name+="_{}".format(teacher_id)
-        torch.save(model, os.path.join(LOG_DIR, 'Pretrained_NW/{}'.format(dataset_name), model_name))
+        torch.save(model, os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), model_name))
         
         plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
         plt.plot(range(1, len(metrics[3])+1), metrics[3], label="Valid Accuracy")
@@ -239,7 +240,7 @@ def train_baseline_teacher(dataset_name, n_epochs, lr=1e-3, weight_decay=0, verb
     print(experiment_config)
 
     os.makedirs(LOG_DIR_DATA, exist_ok=True)
-    os.makedirs(LOG_DIR + '/Pretrained_NW/{}'.format(dataset_name), exist_ok=True)
+    os.makedirs(LOG_DIR_MODEL + '/Pretrained_NW/{}'.format(dataset_name), exist_ok=True)
     train_loader, _, valid_loader = eval("datasets.get_{}({}, {}, {})".format(
             dataset_name,
             experiment_config['batch_size'],
@@ -254,7 +255,7 @@ def train_baseline_teacher(dataset_name, n_epochs, lr=1e-3, weight_decay=0, verb
     metrics = train_teacher(teacher_model, 0, 1,  train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR)
     
     model_name = conventions.resolve_teacher_name(experiment_config)
-    torch.save(model, os.path.join(LOG_DIR, 'Pretrained_NW/{}'.format(dataset_name), model_name))
+    torch.save(model, os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), model_name))
     plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
     plt.plot(range(1, len(metrics[3])+1), metrics[3], label="Valid Accuracy")
     plt.title('Teacher Training teacher')
