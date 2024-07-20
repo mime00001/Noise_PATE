@@ -13,6 +13,8 @@ import datasets
 import conventions
 from utils import misc
 
+LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR_MODEL = "/storage3/michel"
 
 def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device, label=True, test_loader=None):
     xe = nn.CrossEntropyLoss()
@@ -93,8 +95,8 @@ def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weig
     print('Experiment Configuration:')
     print(experiment_config)
 
-    os.makedirs('/disk2/michel/data', exist_ok=True)
-    os.makedirs('/disk2/michel/Pretrained_NW/{}'.format(target_dataset), exist_ok=True)
+    os.makedirs(LOG_DIR_DATA, exist_ok=True)
+    os.makedirs(LOG_DIR_MODEL + '/Pretrained_NW/{}'.format(target_dataset), exist_ok=True)
     
     transfer_loader, _, _ = eval("datasets.get_{}_student({})".format(
         transfer_dataset,
@@ -119,7 +121,7 @@ def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weig
     ret = metrics[3][-1]
     
     model_name = conventions.resolve_student_name(experiment_config)
-    torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(target_dataset), model_name))
+    torch.save(model, os.path.join(LOG_DIR_MODEL, "Pretrained_NW/{}".format(target_dataset), model_name))
     
     plt.ylim(0, 1)
     plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
@@ -150,8 +152,8 @@ def util_train_student_same_init(target_dataset, transfer_dataset, n_epochs, lr=
     print('Experiment Configuration:')
     print(experiment_config)
 
-    os.makedirs('/disk2/michel/data', exist_ok=True)
-    os.makedirs('/disk2/michel/Pretrained_NW/{}'.format(target_dataset), exist_ok=True)
+    os.makedirs(LOG_DIR_DATA, exist_ok=True)
+    os.makedirs(LOG_DIR_MODEL + '/Pretrained_NW/{}'.format(target_dataset), exist_ok=True)
     
     transfer_loader, _, _ = eval("datasets.get_{}_student({})".format(
         transfer_dataset,
@@ -166,14 +168,14 @@ def util_train_student_same_init(target_dataset, transfer_dataset, n_epochs, lr=
     if not use_test_loader:
         test_loader =None
     
-    student_model = model = torch.load(os.path.join('/disk2/michel/Pretrained_NW/MNIST', "init_model"))
+    student_model = model = torch.load(os.path.join(LOG_DIR_MODEL + 'Pretrained_NW/MNIST', "init_model"))
     metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=test_loader)
     
     
     ret = metrics[3][-1]
     
     model_name = conventions.resolve_student_name(experiment_config)
-    torch.save(model, os.path.join('/disk2/michel/Pretrained_NW/{}'.format(target_dataset), model_name))
+    torch.save(model, os.path.join(LOG_DIR_MODEL+ 'Pretrained_NW/{}'.format(target_dataset), model_name))
     
     plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
     plt.plot(range(1, len(metrics[3])+1), metrics[3], label="Valid Accuracy")

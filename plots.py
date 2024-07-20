@@ -650,3 +650,127 @@ def create_kd_data_plot_SVHN():
     plt.legend()
     plt.savefig("plot1_SVHN.png")
     plt.close()
+    
+def create_kd_data_plot(dataset="CIFAR10"):
+    
+    params = {"threshold": 150, "sigma_threshold": 100, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-6}
+    
+    num_datapoints = [2048, 4096, 6144, 8192, 10240, 15000, 20000, 40000, 60000, 100000]
+    
+    
+    accuracies = []
+    
+    device = misc.get_device()
+    experiment_config = conventions.resolve_dataset(dataset)
+    
+    batch_size=256
+    num_workers=4
+    validation_size=0.2
+    
+    if dataset == "SVHN":
+        transform_train = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.44921386, 0.4496643, 0.45029628), (0.20032172, 0.19916263, 0.19936596)),
+        ])
+        
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.45207793, 0.45359373, 0.45602703), (0.22993235, 0.229334, 0.2311905)),
+        ])
+
+        trainset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="train", download=True, transform=transform_train) #, transform=transform_train
+        testset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="test", download=True, transform=transform_test) #, transform=transform_test
+    elif dataset=="MNIST":
+        transform_train=transforms.Compose([
+            transforms.ToTensor(), # first, convert image to PyTorch tensor
+            transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+        ])
+
+        transform_test = transforms.Compose([
+            transforms.ToTensor(), # first, convert image to PyTorch tensor
+            transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+        ])
+
+        trainset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
+        testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    elif dataset=="CIFAR10":
+        transform_train = transforms.Compose([
+            transforms.Pad(4),
+            transforms.RandomCrop(32),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.49139969, 0.48215842, 0.44653093), (0.24703223,0.24348513, 0.26158784)), #(0.2023, 0.1994, 0.2010)
+        ])
+
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.49421429, 0.4851314, 0.45040911), (0.24665252, 0.24289226, 0.26159238)),
+        ])
+
+        trainset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
+        testset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test) #, transform=transform_test
+    else:
+        raise Exception("Choose one of the following datasets: MNIST, CIFAR10, SVHN")
+
+    
+    metrics_list_label = []
+    metrics_list_logits = []
+    
+    for n in num_datapoints:
+        partition_train = [trainset[i] for i in range(n)]
+        valid_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+        
+        
+        teacher_name = conventions.resolve_teacher_name(experiment_config)
+        teacher_path = os.path.join(LOG_DIR, "Pretrained_NW","{}".format(dataset), teacher_name)
+        teacher_nw = torch.load(teacher_path)
+        teacher_nw.to(device)
+
+        student_nw = eval("models.{}.Target_Net({}, {})".format(
+            experiment_config['model_student'],
+            experiment_config['inputs'],
+            experiment_config['code_dim']
+        )).to(device)
+        
+        len_batch = len(valid_loader)
+        
+        m = distill_gaussian.distill_using_noise(None, teacher_nw, student_nw, valid_loader, 75, len_batch, 1e-3, True, device, False, LOG_DIR, label=True, test_loader=None)
+        metrics_list_label.append(m[2][-1])
+        
+        m = distill_gaussian.distill_using_noise(None, teacher_nw, student_nw, valid_loader, 75, len_batch, 1e-3, True, device, False, LOG_DIR, label=False, test_loader=None)
+        metrics_list_logits.append(m[2][-1])
+    
+    
+    valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    len_batch=len(valid_loader)
+        
+    teacher_name = conventions.resolve_teacher_name(experiment_config)
+    teacher_path = os.path.join(LOG_DIR, "Pretrained_NW","{}".format(dataset), teacher_name)
+    teacher_nw = torch.load(teacher_path)
+    teacher_nw.to(device)
+
+    student_nw = eval("models.{}.Target_Net({}, {})".format(
+        experiment_config['model_student'],
+        experiment_config['inputs'],
+        experiment_config['code_dim']
+    )).to(device)
+
+    
+    
+    base_line_logits = distill_gaussian.distill_using_noise(None, teacher_nw, student_nw, valid_loader, 75, len_batch, 1e-3, True, device, False, LOG_DIR, label=False, test_loader=None, different_noise=True)[2][-1]
+    base_line_label = distill_gaussian.distill_using_noise(None, teacher_nw, student_nw, valid_loader, 75, len_batch, 1e-3, True, device, False, LOG_DIR, label=True, test_loader=None, different_noise=True)[2][-1]
+    
+    plt.ylim(0, 1)
+    
+    
+    plt.plot(num_datapoints, metrics_list_label, label=f"Accuracy with label", color="tab:blue")
+    plt.plot(num_datapoints, metrics_list_logits, label=f"Accuracy with logits", color="tab:orange")
+    plt.axhline(base_line_label, color="b", linestyle="--", label="Baseline for labels")
+    plt.axhline(base_line_logits, color="r", linestyle="--", label="Baseline for logits")
+    
+    plt.title('Knowledge Distillation with set number of samples')
+    plt.xlabel('Number of samples')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.savefig(f"plot1_{dataset}.png")
+    plt.close()

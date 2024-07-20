@@ -8,6 +8,7 @@ import student
 import models
 import distill_gaussian
 
+import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 import torch
@@ -547,4 +548,24 @@ def normalize_SVHN(trainset, testset):
 
     print(mean)
     print(std)
-
+    
+def use_pretrained_model():
+    random_seed = 42
+    torch.manual_seed(random_seed)
+    np.random.seed(random_seed)
+    
+    num_classes=10
+    model = torchvision.models.resnet18(weights=torchvision.models.ResNet18_Weights.DEFAULT)
+    
+    print(model)
+    model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+    
+    num_features = model.fc.in_features
+    model.fc = nn.Linear(num_features, num_classes)
+    print("Network after modifying conv1:")
+    print(model)
+    
+    torch.save(model, "/storage3/michel/Pretrained_NW/CIFAR10/init_model")
+    
+    
+    help.test_model_accuracy("/storage3/michel/Pretrained_NW/CIFAR10/init_model", "CIFAR10")

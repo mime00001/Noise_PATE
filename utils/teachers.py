@@ -179,7 +179,7 @@ def util_train_teachers_same_init(dataset_name, n_epochs, nb_teachers=50, lr=1e-
     
     
     try:
-        model = torch.load(os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), "init_model"))
+        model = torch.load(os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), "init_model")).to(device)
     except:
         print("init model initialized")
         teacher_model = model = eval("models.{}.Target_Net({}, {})".format(
@@ -205,7 +205,7 @@ def util_train_teachers_same_init(dataset_name, n_epochs, nb_teachers=50, lr=1e-
             nb_teachers
         ))
         
-        teacher_model = model = torch.load(os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), "init_model"))
+        teacher_model = model = torch.load(os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), "init_model")).to(device)
         
         metrics = train_teacher(teacher_model, teacher_id, nb_teachers,  train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR)
         

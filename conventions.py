@@ -15,7 +15,7 @@ def resolve_dataset(dataset_name):
         experiment_config['model_student'] = "resnet12"
         experiment_config['inputs'] = 3
         experiment_config['channels'] = 3
-        experiment_config['batch_size'] = 256
+        experiment_config['batch_size'] = 64
     elif dataset_name=="MNIST":
         experiment_config['code_dim'] = 10
         experiment_config['model_teacher'] = "mnistresnet"

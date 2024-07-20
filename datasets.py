@@ -199,14 +199,14 @@ def get_CIFAR10_PATE(batch_size, validation_size=0.2):
     testset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test) #, transform=transform_test
     
     #end = int(len(trainset)*(1-validation_size))
-    end = len(trainset)
+    end = len(testset)
     
-    partition_train = [trainset[i] for i in range(end)]
-    partition_test = [trainset[i] for i in range(end, len(trainset))]
+    partition_train = [testset[i] for i in range(end)]
+    partition_test = [testset[i] for i in range(end, len(testset))]
     
     train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    test_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     
     return train_loader, valid_loader, test_loader
 
@@ -351,21 +351,21 @@ def get_CIFAR10_student(batch_size, validation_size=0.2):
     trainset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
     testset = torchvision.datasets.CIFAR10(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test) #, transform=transform_test
     
-    #end = int(len(trainset)*(1-validation_size))
-    end = len(trainset)
+    end = int(len(testset)*(1-validation_size))
+    #end = len(testset)
     
     target_path = LOG_DIR_DATA + "/teacher_labels/CIFAR10.npy"
     
     teacher_labels = np.load(target_path)
     
-    partition_train = [[trainset[i][0], torch.tensor(teacher_labels[i])] for i in range(end) if teacher_labels[i]!= -1] #remove all datapoints, where we have no answer from the teacher ensemble
-    partition_test = [trainset[i] for i in range(end, len(trainset))]
+    partition_train = [[testset[i][0], torch.tensor(teacher_labels[i])] for i in range(end) if teacher_labels[i]!= -1] #remove all datapoints, where we have no answer from the teacher ensemble
+    partition_test = [testset[i] for i in range(end, len(testset))]
         
     print("Number of CIFAR10 samples for student training: {}".format(len(partition_train)))
     
     train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     
     return train_loader, valid_loader, test_loader
 

@@ -44,7 +44,7 @@ def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200,
     
     #first train teachers on dataset
     if train_teachers:
-        teachers.util_train_teachers_same_init(dataset_name=target_dataset, n_epochs=75, nb_teachers=nb_teachers, initialize=True)
+        teachers.util_train_teachers_same_init(dataset_name=target_dataset, n_epochs=75, nb_teachers=nb_teachers, initialize=False) #need to change back to True
     
     if compare:
         #then query teachers for student labels
@@ -92,12 +92,14 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
             params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset =="MNIST": 
             params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
+        elif target_dataset =="CIFAR10": 
+            params = {"threshold": 100, "sigma_threshold": 30, "sigma_gnmax": 10, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset=="SVHN":
             params = {"threshold": 150, "sigma_threshold": 100, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-6}
         else:
             params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
 
-    #noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers)
+    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers)
     noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format(transfer_dataset))
     noise_vote_array = noise_vote_array.T
     
@@ -115,6 +117,18 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
 
 
 if __name__ == '__main__':
-    #full_run("MNIST", "noise_MNIST", 200, train_teachers=True)
-    full_run("SVHN", "CIFAR10", 250, train_teachers=True)
+    #full_run("MNIST", "FMNIST", 200, train_teachers=False)
     
+    #teachers.util_train_teachers(dataset_name="CIFAR10", n_epochs=75, nb_teachers=50, initialize=False)
+    #full_run("SVHN", "CIFAR10", 250, train_teachers=False)
+
+    #print("A")
+    only_transfer_set("CIFAR10", "noise_CIFAR10", 100, epsilon=5)
+    only_transfer_set("CIFAR10", "noise_CIFAR10", 100, epsilon=10)
+    
+    #help.run_parameter_search("/vote_array/SVHN.npy", "./pate_CIFAR10forSVHN")
+    #for eps in [3, 5, 10]:
+    #    help.print_top_values("pate_CIFAR10forSVHN", "num_answered", 5, eps)
+    
+    #teachers.train_baseline_teacher("CIFAR10", 70)
+    #plots.create_kd_data_plot("CIFAR10")

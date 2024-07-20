@@ -60,8 +60,10 @@ def print_top_values(input_file, column_name, top_n_values, target_epsilon=3):
     top_n_df = sorted_df.head(top_n_values)
     
     # Display the top N rows
-    print(f"\nTop {top_n_values} rows by {column_name}:")
-    print(top_n_df)
+    pd.DataFrame.to_csv(top_n_df, "topvalues", mode='a', index=False, header=False)
+    
+    print(f"\nTop {top_n_values} rows by {column_name}:", flush=True)
+    print(top_n_df, flush=True)
 
 
 def run_parameter_search(path="/vote_array/noise_SVHN.npy", savepath="./pate_params", predicted_labels=None):
@@ -71,11 +73,11 @@ def run_parameter_search(path="/vote_array/noise_SVHN.npy", savepath="./pate_par
     noise_vote_array = np.load(noise_vote_array_path)
     noise_vote_array=noise_vote_array.T
     
-    threshold_list = [150, 250, 280, 300] #
-    sigma_threshold_list = [100, 150, 200] # 
-    sigma_gnmax_list = [20, 40, 50]
-    epsilon_list = [20]
-    delta_list =[1e-6]
+    threshold_list = [50, 70, 100, 120] #
+    sigma_threshold_list = [30, 50, 70] # 
+    sigma_gnmax_list = [10, 20, 40]
+    epsilon_list = [3, 5, 10]
+    delta_list =[1e-5]
     num_classes=10
     
     predicted_labels = pate_data.get_argmax_labels(noise_vote_array)
