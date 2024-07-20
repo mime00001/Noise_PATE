@@ -132,3 +132,5 @@ if __name__ == '__main__':
     
     #teachers.train_baseline_teacher("CIFAR10", 70)
     #plots.create_kd_data_plot("CIFAR10")
+    
+    print("test")
