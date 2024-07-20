@@ -344,6 +344,90 @@ def use_softmax():
     
     return metrics[3][-1]
 
+
+def use_noisy_softmax_label(sigma_gnmax):
+    
+    batch_size=256
+    num_workers=4
+    
+    
+    
+    noise_vote_array = pate_data.query_teachers_logits("noise_MNIST", 200)
+    
+    noise_vote_array = np.load(LOG_DIR_DATA + "/logit_array/noise_MNIST.npy")
+    noise_vote_array = np.transpose(noise_vote_array, (1, 0, 2))
+    
+    noise_label_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
+    pate_labels = np.load(noise_label_path)
+    
+    targets = pate_data.get_noisy_softmax_label(noise_vote_array)
+    
+    path = LOG_DIR_DATA + "/noise_MNIST.npy"
+    target_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
+    
+    
+    teacher_labels = np.load(target_path)
+    dataset = np.load(path)
+    
+    assert len(dataset) == len(targets), "size of dataset and teacher labels does not match"
+    
+    transform_test = transforms.Compose([
+         transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+    
+    testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    
+    trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(dataset)) if teacher_labels[i] != -1] #use all available datapoints which have been answered by teachers
+    
+    #trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(12000)]
+    
+    num_samples = len(trainset)
+    
+    print(len(trainset))
+    
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    
+    device = misc.get_device()
+    experiment_config = conventions.resolve_dataset("noise_MNIST")
+    # override
+    
+    print('Experiment Configuration:')
+    print(experiment_config)
+
+    os.makedirs(LOG_DIR_DATA, exist_ok=True)
+    os.makedirs(LOG_DIR + '/Pretrained_NW/{}'.format("noise_MNIST"), exist_ok=True)
+    
+    student_model = model = eval("models.{}.Target_Net({}, {})".format(
+        experiment_config["model_student"],
+        experiment_config["inputs"],
+        experiment_config["code_dim"]
+    )).to(device)
+    
+    metrics = student.train_student(student_model, train_loader, valid_loader, 50, 0.001, 0, True, device, False, LOG_DIR, optim="Adam", label=True)
+       
+    plt.ylim(0, 1)
+    plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
+    plt.plot(range(1, len(metrics[3])+1), metrics[3], label="Valid Accuracy")
+    
+    plt.title('Student Training using softmax and {} samples'.format(num_samples))
+    plt.legend()
+    plt.savefig(os.path.join(LOG_DIR, 'Plots', 'accuracy_student_softmax.png'), dpi=200)
+    plt.close()
+
+    plt.plot(range(1, len(metrics[0])+1), metrics[0], label="Train Loss")
+    plt.plot(range(1, len(metrics[2])+1), metrics[2], label="Valid Loss")
+
+    plt.title('Student Training using softmax and {} samples'.format(num_samples))
+    plt.legend()
+    plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_student_softmax.png'), dpi=200)
+    plt.close()
+    print("Student training using softmax is finished.")
+    
+    return metrics[3][-1]
+
 def use_ensemble_argmax():
     
     batch_size=256
