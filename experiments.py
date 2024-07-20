@@ -414,7 +414,7 @@ def use_noisy_softmax_label(sigma_gnmax):
     
     plt.title('Student Training using softmax and {} samples'.format(num_samples))
     plt.legend()
-    plt.savefig(os.path.join(LOG_DIR, 'Plots', 'accuracy_student_softmax.png'), dpi=200)
+    plt.savefig(os.path.join(LOG_DIR, 'Plots', 'accuracy_student_noisy_softmax.png'), dpi=200)
     plt.close()
 
     plt.plot(range(1, len(metrics[0])+1), metrics[0], label="Train Loss")
@@ -422,7 +422,7 @@ def use_noisy_softmax_label(sigma_gnmax):
 
     plt.title('Student Training using softmax and {} samples'.format(num_samples))
     plt.legend()
-    plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_student_softmax.png'), dpi=200)
+    plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_student_noisy_softmax.png'), dpi=200)
     plt.close()
     print("Student training using softmax is finished.")
     
