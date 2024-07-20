@@ -123,8 +123,8 @@ if __name__ == '__main__':
     #full_run("SVHN", "CIFAR10", 250, train_teachers=False)
 
     #print("A")
-    only_transfer_set("CIFAR10", "noise_CIFAR10", 100, epsilon=5)
-    only_transfer_set("CIFAR10", "noise_CIFAR10", 100, epsilon=10)
+    #only_transfer_set("CIFAR10", "noise_CIFAR10", 100, epsilon=5)
+    #only_transfer_set("CIFAR10", "noise_CIFAR10", 100, epsilon=10)
     
     #help.run_parameter_search("/vote_array/SVHN.npy", "./pate_CIFAR10forSVHN")
     #for eps in [3, 5, 10]:
@@ -133,4 +133,4 @@ if __name__ == '__main__':
     #teachers.train_baseline_teacher("CIFAR10", 70)
     #plots.create_kd_data_plot("CIFAR10")
     
-    print("test")
+    experiments.use_noisy_softmax_label(40)
