@@ -15,7 +15,12 @@ import torchvision.transforms as transforms
 LOG_DIR_DATA = "/storage3/michel/data"
 LOG_DIR = "/storage3/michel"
 
+np.set_printoptions(suppress=True)
+
 def create_first_table():
+    
+    np.set_printoptions(suppress=True)
+    
     target_dataset = "MNIST"
     nb_teachers=200
     
@@ -167,6 +172,8 @@ def create_second_table():
 
 def create_third_table():
     
+    np.set_printoptions(suppress=True)
+    
     noise_vote_array = pate_data.query_teachers(target_dataset="MNIST", query_dataset="noise_MNIST", nb_teachers=200).T
     params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-5}
     
@@ -178,23 +185,26 @@ def create_third_table():
     lo = []
     la = []
     s = []
+    ns =[]
     
     for i in range(5):
         histogram_acc = experiments.use_histogram()
         logits_acc = experiments.use_logits()
         label_acc = student.util_train_student(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60, lr=0.001, optimizer="Adam", use_test_loader=False, loss="xe", label=True)
         softmax_acc = experiments.use_softmax()
+        noisy_softmax_acc = experiments.use_noisy_softmax_label()
         
         h.append(histogram_acc)
         lo.append(logits_acc)
         la.append(label_acc)
         s.append(softmax_acc)
+        ns.append(noisy_softmax_acc)
 
 
 
     values = [
-        ["label_acc", "histogram_acc", "softmax_acc", "logits_acc"],
-        [(np.mean(la), np.std(la)), (np.mean(h), np.std(h)), (np.mean(s), np.std(s)), (np.mean(lo), np.std(lo))]
+        ["label_acc", "histogram_acc", "softmax_acc", "logits_acc", "noisysoftmax"],
+        [(np.mean(la), np.std(la)), (np.mean(h), np.std(h)), (np.mean(s), np.std(s)), (np.mean(lo), np.std(lo)), (np.mean(ns), np.std(ns))]
     ]
 
     fig, ax = plt.subplots()
@@ -774,3 +784,118 @@ def create_kd_data_plot(dataset="CIFAR10"):
     plt.legend()
     plt.savefig(f"plot1_{dataset}.png")
     plt.close()
+    
+def expand_first_table():
+    
+    np.set_printoptions(suppress=True)
+    
+    target_dataset = "MNIST"
+    nb_teachers=200
+    
+    params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 5, "delta" : 1e-5}
+    fmnist_params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": 5, "delta" : 1e-5}
+    
+    vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=target_dataset, nb_teachers=nb_teachers)
+    
+    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset="noise_MNIST", nb_teachers=nb_teachers)
+    
+    f_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset="FMNIST", nb_teachers=nb_teachers)
+    
+    #then perform inference PATE
+    vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format("MNIST"))
+    
+    noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format("noise_MNIST"))
+    
+    f_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format("FMNIST"))
+    
+    
+    vote_array=vote_array.T
+    noise_vote_array = noise_vote_array.T
+    f_vote_array = f_vote_array.T
+    
+    
+    label_path = LOG_DIR_DATA + "/teacher_labels/MNIST.npy"
+    noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format("noise_MNIST")
+    fmnist_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format("FMNIST")
+    epsilon_list = [5, 8, 10, 20]
+    
+    public_list=[[] for e in epsilon_list]
+    gaussian_list=[[] for e in epsilon_list]
+    FMNIST_list=[[] for e in epsilon_list]
+    for j in range(5):
+        for i, eps in enumerate(epsilon_list):
+            #public data
+            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
+            num_answered = (pate_labels != -1).sum()
+            final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=target_dataset, n_epochs=50)
+            public_list[i].append((round(achieved_eps, 3), round(final_acc, 3), num_answered))
+            
+            #gaussian noise
+            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=noise_label_path)
+            final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset="noise_MNIST", n_epochs=50)
+            num_answered = (pate_labels != -1).sum()
+            gaussian_list[i].append((round(achieved_eps, 3), round(final_acc, 3), num_answered))
+            
+            #fmnist
+            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=f_vote_array, threshold=fmnist_params["threshold"], sigma_threshold=fmnist_params["sigma_threshold"], sigma_gnmax=fmnist_params["sigma_gnmax"], epsilon=eps, delta=fmnist_params["delta"], num_classes=10, savepath=fmnist_label_path)
+            final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset="FMNIST", n_epochs=50)
+            num_answered = (pate_labels != -1).sum()
+            FMNIST_list[i].append((round(achieved_eps, 3), round(final_acc, 3), num_answered))
+        
+        
+    print("public data list")
+    print(public_list)
+    
+    print("gaussian list")
+    print(gaussian_list)
+    
+    print("fmnist data list")
+    print(FMNIST_list)
+    
+    headers = ['eps=5', 'eps=8', "eps=10", "eps=20"]
+    row_labels = [ "public_data", "Gaussian noise", "FMNIST data"]
+    values = [
+        [np.mean(public_list[0], axis=0), np.mean(public_list[1], axis=0), np.mean(public_list[2], axis=0), np.mean(public_list[3], axis=0)],
+        [np.mean(gaussian_list[0], axis=0), np.mean(gaussian_list[1], axis=0), np.mean(gaussian_list[2], axis=0) , np.mean(gaussian_list[3], axis=0)],
+        [np.mean(FMNIST_list[0], axis=0), np.mean(FMNIST_list[1], axis=0), np.mean(FMNIST_list[2], axis=0), np.mean(FMNIST_list[3], axis=0)]
+    ]
+    
+    fig, ax = plt.subplots(figsize=(30, 10))
+
+    # Hide the axes
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    ax.set_frame_on(False)
+
+    # Create the table
+    table = ax.table(cellText=values, colLabels=headers, rowLabels=row_labels, loc='center', cellLoc='center')
+
+    # Adjust layout
+    plt.subplots_adjust(left=0.2, top=0.8)
+
+    # Save the table to a file
+    plt.savefig('table 1_mean_rs.png')
+    
+    headers = ['eps=5', 'eps=8', "eps=10", "eps=20"]
+    row_labels = [ "public_data", "Gaussian noise", "FMNIST data"]
+    values = [
+        [np.std(public_list[0], axis=0), np.std(public_list[1], axis=0), np.std(public_list[2], axis=0), np.std(public_list[3], axis=0)],
+        [np.std(gaussian_list[0], axis=0), np.std(gaussian_list[1], axis=0), np.std(gaussian_list[2], axis=0) , np.std(gaussian_list[3], axis=0)],
+        [np.std(FMNIST_list[0], axis=0), np.std(FMNIST_list[1], axis=0), np.std(FMNIST_list[2], axis=0), np.std(FMNIST_list[3], axis=0)]
+    ]
+    
+    fig, ax = plt.subplots(figsize=(30, 10))
+
+    # Hide the axes
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    ax.set_frame_on(False)
+
+    # Create the table
+    table = ax.table(cellText=values, colLabels=headers, rowLabels=row_labels, loc='center', cellLoc='center')
+
+    # Adjust layout
+    plt.subplots_adjust(left=0.2, top=0.8)
+
+    # Save the table to a file
+    plt.savefig('table 1_std_rs.png')

@@ -99,7 +99,7 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
         else:
             params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
 
-    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers)
+    #noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers)
     noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format(transfer_dataset))
     noise_vote_array = noise_vote_array.T
     
@@ -133,4 +133,21 @@ if __name__ == '__main__':
     #teachers.train_baseline_teacher("CIFAR10", 70)
     #plots.create_kd_data_plot("CIFAR10")
     
-    experiments.use_noisy_softmax_label(40)
+    noise_vote_array = pate_data.query_teachers_logits("noise_MNIST", 200)
+    
+    acc_normal=[]
+    acc_softm=[]
+    
+    num=[]
+    
+    for i in range(5):
+        a, n = only_transfer_set("MNIST", "noise_MNIST", epsilon=10)
+        acc_normal.append(a)
+        num.append(num)
+        
+        a = experiments.use_noisy_softmax_label(40)
+        acc_softm.append(a)
+        
+    print(f"normal: {np.mean(acc_normal)}")
+    print(f"softm: {np.mean(acc_softm)}")
+    print(f"num: {np.mean(num)}")

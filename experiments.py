@@ -352,15 +352,12 @@ def use_noisy_softmax_label(sigma_gnmax):
     
     
     
-    noise_vote_array = pate_data.query_teachers_logits("noise_MNIST", 200)
+    #noise_vote_array = pate_data.query_teachers_logits("noise_MNIST", 200)
     
     noise_vote_array = np.load(LOG_DIR_DATA + "/logit_array/noise_MNIST.npy")
     noise_vote_array = np.transpose(noise_vote_array, (1, 0, 2))
     
-    noise_label_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
-    pate_labels = np.load(noise_label_path)
-    
-    targets = pate_data.get_noisy_softmax_label(noise_vote_array)
+    targets = pate_data.get_noisy_softmax_label(noise_vote_array, sigma_gnmax)
     
     path = LOG_DIR_DATA + "/noise_MNIST.npy"
     target_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
@@ -501,6 +498,8 @@ def use_ensemble_argmax():
     plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_student_argmax.png'), dpi=200)
     plt.close()
     print("Student training using argmax is finished.")
+    
+    return metrics[3][-1]
     
 
 def recompute_baseline():

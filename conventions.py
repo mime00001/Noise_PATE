@@ -16,6 +16,7 @@ def resolve_dataset(dataset_name):
         experiment_config['inputs'] = 3
         experiment_config['channels'] = 3
         experiment_config['batch_size'] = 64
+        experiment_config['BN_trick'] = True
     elif dataset_name=="MNIST":
         experiment_config['code_dim'] = 10
         experiment_config['model_teacher'] = "mnistresnet"
@@ -23,6 +24,7 @@ def resolve_dataset(dataset_name):
         experiment_config['inputs'] = 1
         experiment_config['channels'] = 1
         experiment_config['batch_size'] = 256
+        experiment_config['BN_trick'] = True
         
     if dataset_name=='SVHN':
         experiment_config['code_dim'] = 10
@@ -31,6 +33,7 @@ def resolve_dataset(dataset_name):
         experiment_config['inputs'] = 3
         experiment_config['channels'] = 3
         experiment_config['batch_size'] = 256
+        experiment_config['BN_trick'] = True
     
     return experiment_config
 

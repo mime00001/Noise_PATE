@@ -39,7 +39,8 @@ def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int):
         teacher_nw = torch.load(teacher_path)
         teacher_nw = teacher_nw.to(device)
         
-        teacher_nw.train() #set model to training mode, batchnorm trick
+        if experiment_config['BN_trick']:
+            teacher_nw.train() #set model to training mode, batchnorm trick
         
         testindex = 0
         for data, _ in train_loader:
@@ -187,7 +188,7 @@ def get_argmax_labels(vote_array):
         
     return targets
 
-def get_noisy_softmax_label(logit_array, sigma_gnmax):
+def get_noisy_softmax_label(logit_array, sigma_gnmax=40):
     
     targets = []
     
@@ -196,7 +197,7 @@ def get_noisy_softmax_label(logit_array, sigma_gnmax):
         for logit in range(1, len(sample)):
             combined_softmax += softmax(sample[logit])
         
-        noise = np.random.normal(0.0, sigma_gnmax, size=combined_softmax.shape())
+        noise = np.random.normal(0.0, sigma_gnmax, size=combined_softmax.shape)
         
         combined_softmax += noise
         
