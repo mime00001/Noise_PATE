@@ -197,10 +197,6 @@ def get_noisy_softmax_label(logit_array, sigma_gnmax=40):
         for logit in range(1, len(sample)):
             combined_softmax += softmax(sample[logit])
         
-        noise = np.random.normal(0.0, sigma_gnmax, size=combined_softmax.shape)
-        
-        combined_softmax += noise
-        
         final_label = np.argmax(combined_softmax)
         
         targets.append(final_label)
