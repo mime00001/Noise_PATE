@@ -286,7 +286,7 @@ def show_images_MNIST(num=5, padding=1):
     total_width = num_cols * width + (num_cols - 1) * padding
     total_height = num_rows * height + (num_rows - 1) * padding
     
-    grid_image = Image.new('L', size=(total_width, total_height), color=(255, 255, 255))
+    grid_image = Image.new('L', size=(total_width, total_height))
     
     for idx, img in enumerate(images):
         row = idx // num_cols

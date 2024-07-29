@@ -132,7 +132,7 @@ if __name__ == '__main__':
     
     #teachers.train_baseline_teacher("CIFAR10", 70)
     #plots.create_kd_data_plot("CIFAR10")
-    
+     
     noise_vote_array = pate_data.query_teachers_logits("noise_MNIST", 200)
     
     only_transfer_set("MNIST", "noise_MNIST", epsilon=10)
@@ -149,3 +149,4 @@ if __name__ == '__main__':
 
 
     print(np.mean(acc_softm))
+    
