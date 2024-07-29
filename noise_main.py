@@ -134,19 +134,43 @@ if __name__ == '__main__':
     #plots.create_kd_data_plot("CIFAR10")
      
     noise_vote_array = pate_data.query_teachers_logits("noise_MNIST", 200)
+    noise_vote_array2 = pate_data.query_teachers("noise_MNIST", "MNIST", 200)
+    params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-5}
+    noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format("noise_MNSIT")
     
-    only_transfer_set("MNIST", "noise_MNIST", epsilon=10)
     
-    acc_normal=[]
-    acc_softm=[]
+    acc_log=[]
+    acc_sum_softm=[]
+    acc_avg_soft=[]
+    acc_hist = []
+    acc_norm=[]
+    
     
     num=[]
     
     for i in range(5):
 
+        pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path)
+
         a = experiments.use_noisy_softmax_label(40)
-        acc_softm.append(a)
+        acc_sum_softm.append(a)
+        
+        a = experiments.use_histogram()
+        acc_hist.append(a)
+        
+        a = experiments.use_ensemble_argmax()
+        acc_norm.append(a)
+        
+        a = experiments.use_logits()
+        acc_log.append(a)
+        
+        a = experiments.use_softmax()
+        acc_avg_soft.append(a)
 
 
-    print(np.mean(acc_softm))
+    print(f"summed soft: {np.mean(acc_sum_softm)}")
+    print(f"histogram: {np.mean(acc_hist)}")
+    print(f"argmax (label): {np.mean(acc_norm)}")
+    print(f"logits: {np.mean(acc_log)}")
+    print(f"avg softmax: {np.mean(acc_avg_soft)}")
     
