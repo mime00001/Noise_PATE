@@ -157,7 +157,7 @@ def use_histogram():
         experiment_config["code_dim"]
     )).to(device)
     
-    metrics = student.train_student(student_model, train_loader, valid_loader, 100, 0.0001, 0, True, device, False, LOG_DIR, optim="Adam", label=False, loss="misc")
+    metrics = student.train_student(student_model, train_loader, valid_loader, 50, 0.0001, 0, True, device, False, LOG_DIR, optim="Adam", label=False, loss="misc")
     
     plt.ylim(0, 1) 
     plt.plot(range(1, len(metrics[1])+1), metrics[1], label="Train Accuracy")
@@ -421,7 +421,7 @@ def use_noisy_softmax_label(sigma_gnmax):
     plt.legend()
     plt.savefig(os.path.join(LOG_DIR, 'Plots', 'loss_student_noisy_softmax.png'), dpi=200)
     plt.close()
-    print("Student training using softmax is finished.")
+    print("Student training using summed softmax is finished.")
     
     return metrics[3][-1]
 
@@ -453,12 +453,10 @@ def use_ensemble_argmax():
     
     #trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(dataset)) if teacher_labels[i] != -1] #use all available datapoints which have been answered by teachers
     
-    trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(1000)]
+    trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(dataset)) if teacher_labels[i] != -1]
     
     num_samples = len(trainset)
-    
-    print(len(trainset))
-    print("batchsize: {}".format(batch_size))
+    print(num_samples)
     
     train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)

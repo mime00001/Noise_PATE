@@ -130,7 +130,7 @@ def inference_pate(vote_array, threshold, sigma_threshold, sigma_gnmax, epsilon,
     # this is for getting the labels
     noisy_labels, indices_answered = query(vote_array, threshold, sigma_threshold, sigma_gnmax, num_classes)
     achieved_epsilon = get_actually_consumed_epsilon(dp_eps)
-    print(achieved_epsilon)
+    print(f"achieved epsilon: {achieved_epsilon} \trequested epsilon: {epsilon}")
     final_labels = get_final_noisy_labels(noisy_labels, indices_answered, max_num_query)
     if save:
         np.save(savepath, final_labels)

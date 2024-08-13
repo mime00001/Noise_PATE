@@ -117,40 +117,48 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
 
 
 if __name__ == '__main__':
-    #full_run("MNIST", "FMNIST", 200, train_teachers=False)
     
-    #teachers.util_train_teachers(dataset_name="CIFAR10", n_epochs=75, nb_teachers=50, initialize=False)
-    #full_run("SVHN", "CIFAR10", 250, train_teachers=False)
-
-    #print("A")
-    #only_transfer_set("CIFAR10", "noise_CIFAR10", 100, epsilon=5)
-    #only_transfer_set("CIFAR10", "noise_CIFAR10", 100, epsilon=10)
+    transfer_dataset = "noise_MNIST"
+    params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-5}
     
-    #help.run_parameter_search("/vote_array/SVHN.npy", "./pate_CIFAR10forSVHN")
-    #for eps in [3, 5, 10]:
-    #    help.print_top_values("pate_CIFAR10forSVHN", "num_answered", 5, eps)
+  
+    noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format(transfer_dataset))
+    noise_vote_array = noise_vote_array.T
     
-    #teachers.train_baseline_teacher("CIFAR10", 70)
-    #plots.create_kd_data_plot("CIFAR10")
-     
-    noise_vote_array = pate_data.query_teachers_logits("noise_MNIST", 200)
-    noise_vote_array2 = pate_data.query_teachers("noise_MNIST", "MNIST", 200)
+    #then perform inference pate
+    noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(transfer_dataset)
+    avg =[]
+    for i in range(5):
+        eps, noise_votes = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path) 
+        dTdS = student.util_train_student(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60, lr=0.001, optimizer="Adam", kwargs=params, use_test_loader=True)
+        avg.append(dTdS)
+        
+    print(np.mean(avg))
+    
+   
+    
+    
+    """ 
+    noise_vote_array2 = np.load(LOG_DIR_DATA + "/vote_array/{}".format("noise_MNIST.npy")).T
     params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-5}
     noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format("noise_MNSIT")
-    
     
     acc_log=[]
     acc_sum_softm=[]
     acc_avg_soft=[]
     acc_hist = []
     acc_norm=[]
-    
+    acc = []
     
     num=[]
     
     for i in range(5):
 
-        pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path)
+        pate_main.inference_pate(vote_array=noise_vote_array2, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path)
+
+    
+        finalacc = student.util_train_student(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params)
+        acc.append(finalacc)
 
         a = experiments.use_noisy_softmax_label(40)
         acc_sum_softm.append(a)
@@ -173,4 +181,4 @@ if __name__ == '__main__':
     print(f"argmax (label): {np.mean(acc_norm)}")
     print(f"logits: {np.mean(acc_log)}")
     print(f"avg softmax: {np.mean(acc_avg_soft)}")
-    
+    print(f"{np.mean(acc)}") """

@@ -109,28 +109,10 @@ def create_first_table():
     plt.savefig('table 1_std.png')
 
 
-def create_second_table():
-    
+def create_same_diff_init_table():
+    np.set_printoptions(suppress=True)
     
     params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-5}
-    
-    
-    teachers.util_train_teachers_same_init(dataset_name="MNIST", n_epochs=50, nb_teachers=200)
-    
-    
-    noise_vote_array = pate_data.query_teachers(target_dataset="MNIST", query_dataset="noise_MNIST", nb_teachers=200)
-    noise_vote_array = noise_vote_array.T
-    
-    #then perform inference pate
-    noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format("noise_MNIST")
-    noise_votes = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path) 
-    
-    
-    #then train the student on Gaussian noise    
-    sameT_diffS_acc = student.util_train_student(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60, lr=0.001, optimizer="Adam", kwargs=params, use_test_loader=True)
-    sameT_sameS_acc = student.util_train_student_same_init(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60, use_test_loader=True)
-    
-    
     
     teachers.util_train_teachers(dataset_name="MNIST", n_epochs=50, nb_teachers=200)
     
@@ -139,19 +121,46 @@ def create_second_table():
     
     #then perform inference pate
     noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format("noise_MNIST")
-    noise_votes = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path) 
     
     
-    #then train the student on Gaussian noise    
-    diffT_diffS_acc = student.util_train_student(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60, lr=0.001, optimizer="Adam", kwargs=params, use_test_loader=True)
-    diffT_sameS_acc = student.util_train_student_same_init(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60, use_test_loader=True)
+    diffT_diffS_acc=[]
+    diffT_sameS_acc=[]
+    #then train the student on Gaussian noise
+    for i in range(5):
+        noise_votes = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path) 
+        dTdS = student.util_train_student(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60, lr=0.001, optimizer="Adam", kwargs=params)
+        diffT_diffS_acc.append(dTdS)
+        dTsS = student.util_train_student_same_init(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60)
+        diffT_sameS_acc.append(dTsS)
     
+    
+    
+    teachers.util_train_teachers_same_init(dataset_name="MNIST", n_epochs=50, nb_teachers=200, initialize=False)
+    
+    
+    noise_vote_array = pate_data.query_teachers(target_dataset="MNIST", query_dataset="noise_MNIST", nb_teachers=200)
+    noise_vote_array = noise_vote_array.T
+    
+    #then perform inference pate
+    noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format("noise_MNIST")
+   
+    
+    sameT_diffS_acc = []
+    sameT_sameS_acc = []
+    
+    #then train the student on Gaussian noise
+    for i in range(5):
+        noise_votes = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path)
+        sTdF = student.util_train_student(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60, lr=0.001, optimizer="Adam", kwargs=params)
+        sameT_diffS_acc.append(sTdF)
+        sTsS = student.util_train_student_same_init(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60)
+        sameT_sameS_acc.append(sTsS)
     
     headers = ['Same teacher init', 'Different teacher init']
     row_labels = [ "Same student init", "different student init"]
     values = [
-        [sameT_sameS_acc, diffT_sameS_acc],
-        [ sameT_diffS_acc, diffT_diffS_acc]
+        [np.mean(sameT_sameS_acc), np.mean(diffT_sameS_acc)],
+        [np.mean(sameT_diffS_acc), np.mean(diffT_diffS_acc)]
     ]
     
     fig, ax = plt.subplots()
