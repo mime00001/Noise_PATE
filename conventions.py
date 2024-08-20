@@ -4,6 +4,8 @@ Naming conventions, some specs, hyperparameters and stuff
 
 def resolve_dataset(dataset_name):
     # That can't be defined here
+    
+    print(dataset_name)
     if "noise_" in dataset_name:
         dataset_name = dataset_name.replace("noise_", "")
     experiment_config = {

@@ -14,6 +14,7 @@ import torchvision.transforms as transforms
 
 LOG_DIR_DATA = "/storage3/michel/data"
 LOG_DIR = "/storage3/michel"
+LOG_DIR_MODEL = "/storage3/michel/"
 
 np.set_printoptions(suppress=True)
 
@@ -87,12 +88,12 @@ def create_first_table():
     headers = ['eps=5', 'eps=8', "eps=10", "eps=20"]
     row_labels = [ "public_data", "Gaussian noise", "FMNIST data"]
     values = [
-        [(np.mean(public_list[0], axis=0), np.std(public_list[0], axis=0)), (np.mean(public_list[1], axis=0), np.std(public_list[1], axis=0)), (np.mean(public_list[2], axis=0), np.std(public_list[2], axis=0)), (np.mean(public_list[3], axis=0), np.std(public_list[3], axis=0))],
-        [(np.mean(gaussian_list[0], axis=0), np.std(gaussian_list[0], axis=0)), (np.mean(gaussian_list[1], axis=0), np.std(gaussian_list[1], axis=0)), (np.mean(gaussian_list[2], axis=0), np.std(gaussian_list[2], axis=0)), (np.mean(gaussian_list[3], axis=0), np.std(gaussian_list[3], axis=0))],
-        [(np.mean(FMNIST_list[0], axis=0), np.std(FMNIST_list[0], axis=0)), (np.mean(FMNIST_list[1], axis=0), np.std(FMNIST_list[1], axis=0)), (np.mean(FMNIST_list[2], axis=0), np.std(FMNIST_list[2], axis=0)), (np.mean(FMNIST_list[3], axis=0), np.std(FMNIST_list[3], axis=0))]
+        [np.mean(public_list[0], axis=0), np.mean(public_list[1], axis=0), np.mean(public_list[2], axis=0), np.mean(public_list[3], axis=0)],
+        [np.mean(gaussian_list[0], axis=0), np.mean(gaussian_list[1], axis=0), np.mean(gaussian_list[2], axis=0) , np.mean(gaussian_list[3], axis=0)],
+        [np.mean(FMNIST_list[0], axis=0), np.mean(FMNIST_list[1], axis=0), np.mean(FMNIST_list[2], axis=0), np.mean(FMNIST_list[3], axis=0)]
     ]
     
-    fig, ax = plt.subplots(figsize=(50, 30))
+    fig, ax = plt.subplots(figsize=(30, 10))
 
     # Hide the axes
     ax.xaxis.set_visible(False)
@@ -106,13 +107,48 @@ def create_first_table():
     plt.subplots_adjust(left=0.2, top=0.8)
 
     # Save the table to a file
-    plt.savefig('table 1_std.png')
+    plt.savefig('table 1_mean_cs.png')
+    
+    headers = ['eps=5', 'eps=8', "eps=10", "eps=20"]
+    row_labels = [ "public_data", "Gaussian noise", "FMNIST data"]
+    values = [
+        [np.std(public_list[0], axis=0), np.std(public_list[1], axis=0), np.std(public_list[2], axis=0), np.std(public_list[3], axis=0)],
+        [np.std(gaussian_list[0], axis=0), np.std(gaussian_list[1], axis=0), np.std(gaussian_list[2], axis=0) , np.std(gaussian_list[3], axis=0)],
+        [np.std(FMNIST_list[0], axis=0), np.std(FMNIST_list[1], axis=0), np.std(FMNIST_list[2], axis=0), np.std(FMNIST_list[3], axis=0)]
+    ]
+    
+    fig, ax = plt.subplots(figsize=(30, 10))
+
+    # Hide the axes
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    ax.set_frame_on(False)
+
+    # Create the table
+    table = ax.table(cellText=values, colLabels=headers, rowLabels=row_labels, loc='center', cellLoc='center')
+
+    # Adjust layout
+    plt.subplots_adjust(left=0.2, top=0.8)
+
+    # Save the table to a file
+    plt.savefig('table 1_std_cs.png')
 
 
 def create_same_diff_init_table():
     np.set_printoptions(suppress=True)
     
     params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-5}
+    
+    device = misc.get_device()
+    experiment_config = conventions.resolve_dataset("MNIST")
+    
+    print("init model initialized")
+    teacher_model = model = eval("models.{}.Target_Net({}, {})".format(
+        experiment_config['model_teacher'],
+        experiment_config['inputs'],
+        experiment_config['code_dim']
+    )).to(device)
+    torch.save(model, os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format("MNIST"), "init_model"))
     
     teachers.util_train_teachers(dataset_name="MNIST", n_epochs=50, nb_teachers=200)
     

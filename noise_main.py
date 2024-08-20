@@ -44,7 +44,7 @@ def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200,
     
     #first train teachers on dataset
     if train_teachers:
-        teachers.util_train_teachers_same_init(dataset_name=target_dataset, n_epochs=75, nb_teachers=nb_teachers, initialize=False) #need to change back to True
+        teachers.util_train_teachers_same_init(dataset_name=target_dataset, n_epochs=75, nb_teachers=nb_teachers, initialize=True) #need to change back to True
     
     if compare:
         #then query teachers for student labels
@@ -85,7 +85,7 @@ def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200,
         print(f"Accuracy with transfer dataset: {transfer_acc}")
 
 
-def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb_teachers=200, params=None, use_test_loader=False, epsilon=20):
+def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb_teachers=200, params=None, epsilon=20):
     
     if not params:
         if transfer_dataset=="FMNIST":
@@ -110,33 +110,18 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
     print(len(noise_votes))
     
     #then train the student on Gaussian noise    
-    finalacc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params, use_test_loader=use_test_loader)
+    finalacc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params)
     return finalacc, num_answered
     
 
 
 
 if __name__ == '__main__':
+    #teachers.util_train_teachers_same_init(dataset_name="MNIST", n_epochs=75, nb_teachers=200, initialize=True)
+    #plots.create_same_diff_init_table()
+    #distill_gaussian.experiment_distil_gaussian("MNIST", "MNIST", 50, 50)
     
-    transfer_dataset = "noise_MNIST"
-    params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-5}
-    
-  
-    noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format(transfer_dataset))
-    noise_vote_array = noise_vote_array.T
-    
-    #then perform inference pate
-    noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(transfer_dataset)
-    avg =[]
-    for i in range(5):
-        eps, noise_votes = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path) 
-        dTdS = student.util_train_student(target_dataset="MNIST", transfer_dataset="noise_MNIST", n_epochs=60, lr=0.001, optimizer="Adam", kwargs=params, use_test_loader=True)
-        avg.append(dTdS)
-        
-    print(np.mean(avg))
-    
-   
-    
+    plots.create_first_table()
     
     """ 
     noise_vote_array2 = np.load(LOG_DIR_DATA + "/vote_array/{}".format("noise_MNIST.npy")).T

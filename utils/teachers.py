@@ -190,6 +190,7 @@ def util_train_teachers_same_init(dataset_name, n_epochs, nb_teachers=50, lr=1e-
         torch.save(model, os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(dataset_name), "init_model"))
     
     if initialize:
+        print("init model initialized")
         teacher_model = model = eval("models.{}.Target_Net({}, {})".format(
             experiment_config['model_teacher'],
             experiment_config['inputs'],

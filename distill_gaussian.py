@@ -80,7 +80,7 @@ def distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_ep
     
     
     valid_loss_prev = np.inf
-    teacher_nw.train()
+    #teacher_nw.train()
     student_nw.train()
     for epoch in range(1, n_epochs+1):
         train_loss = 0.0
@@ -167,7 +167,11 @@ def experiment_distil_gaussian(target_dataset, transfer_dataset, n_epochs_gaussi
     print(len_batch*256)
 
     teacher_name = conventions.resolve_teacher_name(experiment_config)
-    teacher_path = os.path.join(LOG_DIR, "Pretrained_NW","{}".format(target_dataset), teacher_name)
+    teacher_path = os.path.join("/storage3/michel", "Pretrained_NW","{}".format(target_dataset), teacher_name)
+    
+    
+    teachers.util_train_teachers("MNIST", 50, 1)
+        
     teacher_nw = torch.load(teacher_path)
     teacher_nw.to(device)
 
@@ -181,7 +185,7 @@ def experiment_distil_gaussian(target_dataset, transfer_dataset, n_epochs_gaussi
         test_loader=None
     
     plt.ylim(0, 1)
-    metrics = distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_epochs_gaussian, len_batch, lr, verbose, device, save, LOG_DIR, label, test_loader)
+    metrics = distill_using_noise(model_family, teacher_nw, student_nw, valid_loader, n_epochs_gaussian, len_batch, lr, verbose, device, save, LOG_DIR, label, test_loader, True)
     plt.plot(range(1, len(metrics[2])+1), metrics[2], label="Accuracy Noise")
 
     if compare:
