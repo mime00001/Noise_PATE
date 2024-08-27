@@ -11,10 +11,16 @@ While PATE tries to transfer knowledge from an ensemble of teacher models, there
 
 This codebase runs on `Python 3.12.3`. It uses common Python libraries, such as `torch` and `numpy`. All dependencies can be found in "requirements.txt".
 
+## How to run
 
+Running the main function on the MNIST dataset using Gaussian noise as transfer method can be done via running the noise_main.py file. First the teachers are trained on the private MNIST dataset, then the knowledge transfer to the student model is performed by using the BatchNorm trick and Gaussian noise. Training and querying the teachers will take a long time. When the teachers are trained once, the train_teachers variable can be set to False in the function call. 
+
+All the plots can be created by running the function create_all_plots() in the plots.py file. Warning: this will take a long time.
 
 ## References
 
 PATE framework: https://github.com/tensorflow/privacy/tree/master/research/pate_2017 and https://github.com/tensorflow/privacy/tree/master/research/pate_2018
 
 Gaussian KD: https://github.com/Piyush-555/GaussianDistillation/tree/main
+
+Privacy accounting: https://github.com/cleverhans-lab/PrivatePrompts/tree/main/PromptPATE/pate
