@@ -15,9 +15,9 @@ import torchvision.transforms as transforms
 #this file creates all tables and calculations performed in the thesis
 
 
-LOG_DIR_DATA = "/storage3/michel/data"
-LOG_DIR = "/storage3/michel"
-LOG_DIR_MODEL = "/storage3/michel/"
+LOG_DIR_DATA = "/data"
+LOG_DIR = ""
+LOG_DIR_MODEL = ""
 
 np.set_printoptions(suppress=True)
 

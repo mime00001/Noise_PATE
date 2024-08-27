@@ -13,7 +13,7 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
-LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR_DATA = "/data"
 
 def getDataloaders(trainset, testset, valid_size, batch_size, num_workers):
     num_train = len(trainset)

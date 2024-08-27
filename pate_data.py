@@ -9,7 +9,7 @@ import tensorflow as tf
 
 torch.manual_seed(42)
 
-LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR_DATA = "/data"
 
 #this file performs the data processing
 

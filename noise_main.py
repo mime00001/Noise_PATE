@@ -26,7 +26,7 @@ import torch.nn as nn
 import pandas as pd
 
 
-LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR_DATA = "/data"
 
 
 def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200, params=None, train_teachers=False, compare=True, epsilon=10):
