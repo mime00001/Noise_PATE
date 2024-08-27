@@ -16,6 +16,9 @@ import datasets
 import conventions
 from utils import misc, teachers
 
+#this code is taken from https://github.com/Piyush-555/GaussianDistillation/tree/main
+
+
 LOG_DIR = "/storage3/michel/"
 
 criterion = misc.DistillationLoss()

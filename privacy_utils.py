@@ -2,6 +2,7 @@ import numpy as np
 import scipy.stats
 import math
 
+#taken from https://github.com/cleverhans-lab/PrivatePrompts/tree/main/PromptPATE/pate
 
 def _logsumexp(x):
     """

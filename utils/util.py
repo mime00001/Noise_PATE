@@ -2,6 +2,7 @@ import sys
 import numpy as np
 from PIL import Image
 
+#this code is taken from https://github.com/Piyush-555/GaussianDistillation/tree/main
 
 class ProgressBar:
     """

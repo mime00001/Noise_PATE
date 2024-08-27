@@ -18,6 +18,8 @@ import torch.nn.functional as F
 # General
 ################################################################
 
+#this code is taken from https://github.com/Piyush-555/GaussianDistillation/tree/main
+
 def get_device():
     return torch.device("cuda")
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -8,6 +8,7 @@ from privacy_utils import compute_rdp_data_dependent_gnmax
 from privacy_utils import compute_rdp_data_dependent_threshold
 from privacy_utils import rdp_to_dp
 
+#taken from https://github.com/cleverhans-lab/PrivatePrompts/tree/main/PromptPATE/pate
 
 def one_hot(indices, num_classes):
     """

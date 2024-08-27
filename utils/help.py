@@ -24,6 +24,7 @@ from utils import misc
 
 import pandas as pd
 
+#this file contains some helper functions
 
 LOG_DIR_DATA = "/storage3/michel/data"
 LOG_DIR = "/storage3/michel/"

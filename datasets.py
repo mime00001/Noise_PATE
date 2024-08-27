@@ -39,6 +39,8 @@ def getDataloaders(trainset, testset, valid_size, batch_size, num_workers):
 # Datasets
 ################################################################
 
+#this code is partially taken from https://github.com/Piyush-555/GaussianDistillation/tree/main
+
 #these datasets are for teacher training, they return three dataloaders, where the first data loader can be used as training data loader and the third as validation loader
 
 def get_CIFAR10(batch_size, teacher_id, nb_teachers, valid_size=0.2):

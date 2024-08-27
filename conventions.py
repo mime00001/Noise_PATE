@@ -2,6 +2,8 @@
 Naming conventions, some specs, hyperparameters and stuff
 """
 
+#this code is taken from https://github.com/Piyush-555/GaussianDistillation/tree/main
+
 def resolve_dataset(dataset_name):
     # That can't be defined here
     

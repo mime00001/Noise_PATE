@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 import torch, torchvision
 import torchvision.transforms as transforms
 
+#this file creates all tables and calculations performed in the thesis
+
+
 LOG_DIR_DATA = "/storage3/michel/data"
 LOG_DIR = "/storage3/michel"
 LOG_DIR_MODEL = "/storage3/michel/"
@@ -706,7 +709,7 @@ def create_kd_data_plot_SVHN():
     plt.savefig("plot1_SVHN.png")
     plt.close()
     
-def create_kd_data_plot(dataset="CIFAR10"):
+def create_kd_data_plot(dataset="MNIST"):
     
     params = {"threshold": 150, "sigma_threshold": 100, "sigma_gnmax": 40, "epsilon": 10, "delta" : 1e-6}
     
@@ -944,3 +947,12 @@ def expand_first_table():
 
     # Save the table to a file
     plt.savefig('table 1_std_rs.png')
+    
+def create_all_plots():
+    create_first_table()
+    create_forth_table()
+    create_kd_data_plot()
+    create_same_diff_init_table()
+    create_third_table()
+    expand_first_table()
+    consensus_plots_MNIST()

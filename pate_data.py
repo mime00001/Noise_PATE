@@ -11,6 +11,8 @@ torch.manual_seed(42)
 
 LOG_DIR_DATA = "/storage3/michel/data"
 
+#this file performs the data processing
+
 def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int):
     """queries the teacher ensemble for labels about a specific dataset
 

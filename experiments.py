@@ -16,6 +16,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+#this file contains experiments and helper functions
+
 LOG_DIR_DATA = "/storage3/michel/data"
 LOG_DIR = "/storage3/michel"
 
