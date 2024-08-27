@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+#this code is taken from https://github.com/Piyush-555/GaussianDistillation/tree/main
 
 def accuracy(outputs, labels):
     _, preds = torch.max(outputs, dim=1)

@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from collections import OrderedDict
 
+#this code is taken from https://github.com/Piyush-555/GaussianDistillation/tree/main
+
 class BasicBlock(nn.Module):
     expansion = 1
 
