@@ -17,25 +17,6 @@ Running the main function on the MNIST dataset using Gaussian noise as transfer 
 
 All the plots can be created by running the function create_all_plots() in the plots.py file. Warning: this will take a long time.
 
-## Results
-
-```{=latex}
-\begin{table}[ht]
-\centering
-\begin{tabular}{|c|c|c|c|c|}
-\hline
-Accuracy & $\varepsilon=5$ & $\varepsilon=8$ & $\varepsilon=10$ & $\varepsilon=20$ \\ \hline
-PATE + RS (baseline)                 & 95.6\% $\pm$ 0.3\%    & 96.1\%* $\pm$ 0.5\%     & - & -  \\ \hline
-PATE + CS                 & 95.9\% $\pm$ 0.5\%    & 97.2\%* $\pm$ 0.4\%    & -    & -    \\ \hline
-Gaussian noise + RS              & 10.3\% $\pm$ 0.3\%      & 9.9\% $\pm$ 0.3\%     & 10.1\% $\pm$ 0.3\%      & 10.5\% $\pm$ 0.3\%     \\ \hline
-Gaussian noise + CS              & 38\% $\pm$ 3.6\%  & 51.2\% $\pm$ 4\%    & 59.2\% $\pm$ 2.3\%      & 73.9\% $\pm$ 1.6\%    \\ \hline
-FMNIST + RS                      & 29.5\% $\pm$ 1.9\%     & 33.9\% $\pm$ 1.9\%     & 34.4\% $\pm$ 1\%        & 42\% $\pm$ 4.3\%      \\ \hline
-FMNIST + CS                      & 55.5\% $\pm$ 2.7\%     & 61.5\% $\pm$ 2.1\%     & 64.7\% $\pm$ 1.8\%         & 74.5\% $\pm$ 1.1\%     \\ \hline
-\end{tabular}
-\caption{The resulting accuracy for knowledge transfer using different datasets for MNIST. $T=150,\ \sigma_1=120,\ \sigma_2=40,\ \delta=10^{-5}$ for the public data and Gaussian noise. $T=200,\ \sigma_1=100,\ \sigma_2=20,\ \delta=10^{-5}$ for FMNIST~\cite{dataset_xiao2017fashionmnistnovelimagedataset}. \emph{*There is not enough public data to fulfill the whole privacy budget, $\varepsilon=6.47$}. Note that RS is running statistics and CS is current statistics.}
-\end{table}
-```
-
 ## References
 
 PATE framework: https://github.com/tensorflow/privacy/tree/master/research/pate_2017 and https://github.com/tensorflow/privacy/tree/master/research/pate_2018
