@@ -25,8 +25,9 @@ import torch.nn as nn
 
 import pandas as pd
 
-
-LOG_DIR_DATA = "/data"
+LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR = "/storage3/michel"
+LOG_DIR_MODEL = "/storage3/michel"
 
 
 def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200, params=None, train_teachers=False, compare=True, epsilon=10):
@@ -117,4 +118,9 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
 
 
 if __name__ == '__main__':
-    full_run("MNIST", "noise_MNIST", 200, train_teachers=True, epsilon=10, compare=True)
+    #full_run("MNIST", "noise_MNIST", 200, train_teachers=True, epsilon=10, compare=True)
+    acc, n = only_transfer_set("MNIST", "noise_MNIST", 200, epsilon=20)
+    
+    print(f"Accuracy after training: {acc}")
+    
+    plots.plot_throughput(acc)

@@ -9,8 +9,9 @@ import tensorflow as tf
 
 torch.manual_seed(42)
 
-LOG_DIR_DATA = "/data"
-
+LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR = "/storage3/michel"
+LOG_DIR_MODEL = "/storage3/michel"
 #this file performs the data processing
 
 def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int):

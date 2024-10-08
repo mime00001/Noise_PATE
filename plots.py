@@ -7,6 +7,7 @@ import datasets, models
 import distill_gaussian
 
 import os
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 import torch, torchvision
@@ -15,9 +16,9 @@ import torchvision.transforms as transforms
 #this file creates all tables and calculations performed in the thesis
 
 
-LOG_DIR_DATA = "/data"
-LOG_DIR = ""
-LOG_DIR_MODEL = ""
+LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR = "/storage3/michel"
+LOG_DIR_MODEL = "/storage3/michel"
 
 np.set_printoptions(suppress=True)
 
@@ -956,3 +957,124 @@ def create_all_plots():
     create_third_table()
     expand_first_table()
     consensus_plots_MNIST()
+    
+def plot_throughput(baseline):
+    
+    
+    
+    size=[1, 4, 8, 16,32,64,128,256,512, 1024, 2048, 4096]
+    
+    final_accs=[]
+    
+    train_accs=[]
+    
+    model = torch.load("/storage3/michel/Pretrained_NW/MNIST/student_MNIST_mnistresnet.model")
+    
+    num_workers = 4
+    
+    transform_train=transforms.Compose([
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+
+    trainset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
+    testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    
+
+    end = int(len(testset)*(1-0.2))
+    
+    
+    #remove all datapoints, where we have no answer from the teacher ensemble
+    partition_test = [testset[i] for i in range(end, len(testset))]
+
+
+    test_loader = torch.utils.data.DataLoader(partition_test, batch_size=256, num_workers=num_workers, shuffle=True)
+    
+    
+    path = LOG_DIR_DATA + "/noise_MNIST.npy"
+    target_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
+    
+    dataset = np.load(path)
+    targets = np.load(target_path)
+    
+    assert len(dataset) == len(targets), "size of dataset and teacher labels does not match"
+    
+    trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(dataset)) if targets[i] != -1] #also need to recheck if we need this
+    
+    noise_loader = torch.utils.data.DataLoader(trainset, batch_size=256, num_workers=num_workers, shuffle=True)
+    
+    
+    for s in size:
+        
+        accs=[]
+        accs_train=[]
+    
+        model.to("cuda")
+        
+        model.train()
+        
+        random.shuffle(partition_test)
+        
+        for data, target in noise_loader:
+            data, target = data.to("cuda"), target.to("cuda")
+            with torch.no_grad():
+                output = model(data)
+        
+        eval_set = partition_test[:s]
+        eval_loader = torch.utils.data.DataLoader(eval_set, batch_size=256, num_workers=num_workers, shuffle=True)
+        
+        for data, target in eval_loader:
+            data, target = data.to("cuda"), target.to("cuda")
+            with torch.no_grad():
+                output = model(data)
+            accs_train.append(misc.accuracy_metric(output.detach(), target))
+        valid_train_acc = np.mean(accs_train)
+        
+        train_accs.append(valid_train_acc)
+        
+        model.eval()
+        
+        for data, target in test_loader:
+            data, target = data.to("cuda"), target.to("cuda")
+            with torch.no_grad():
+                output = model(data)
+            accs.append(misc.accuracy_metric(output.detach(), target))
+        valid_acc = np.mean(accs)
+        
+        print(f"size: {s}, acc: {valid_acc}")
+        
+        final_accs.append(valid_acc)
+        
+    plt.plot(size, final_accs, label="Eval acc after throughput")
+    plt.scatter(size, final_accs)
+    
+    plt.plot(size, train_accs, label="BatchNorm trick acc")
+    plt.scatter(size, train_accs)
+    
+    plt.axhline(baseline, color="b", linestyle="--", label="Baseline")
+    plt.xlabel('Throughput size')
+    plt.ylabel('Accuracy')
+    plt.title('Accuracy vs Throughput size')
+    
+    plt.ylim(0, 1)
+
+    plt.savefig("acc_size.png")
+    
+    
+    
+    path = LOG_DIR_DATA + "/noise_MNIST.npy"
+    target_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
+    
+    dataset = np.load(path)
+    targets = np.load(target_path)
+    
+    assert len(dataset) == len(targets), "size of dataset and teacher labels does not match"
+    
+    trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(dataset)) if targets[i] != -1] #also need to recheck if we need this
+    
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=256, num_workers=num_workers, shuffle=True)

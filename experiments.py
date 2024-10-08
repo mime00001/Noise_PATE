@@ -18,8 +18,9 @@ import matplotlib.pyplot as plt
 
 #this file contains experiments and helper functions
 
-LOG_DIR_DATA = "/data"
-LOG_DIR = ""
+LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR = "/storage3/michel"
+LOG_DIR_MODEL = "/storage3/michel"
 
 def compare_ensemble_output(length):
     

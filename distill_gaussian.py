@@ -19,8 +19,9 @@ from utils import misc, teachers
 #this code is taken from https://github.com/Piyush-555/GaussianDistillation/tree/main
 
 
-LOG_DIR = ""
-
+LOG_DIR_DATA = "/storage3/michel/data"
+LOG_DIR = "/storage3/michel"
+LOG_DIR_MODEL = "/storage3/michel"
 criterion = misc.DistillationLoss()
 xe = nn.CrossEntropyLoss(reduction='mean')
 
