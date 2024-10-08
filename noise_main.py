@@ -119,8 +119,4 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
 
 if __name__ == '__main__':
     #full_run("MNIST", "noise_MNIST", 200, train_teachers=True, epsilon=10, compare=True)
-    acc, n = only_transfer_set("MNIST", "noise_MNIST", 200, epsilon=20)
-    
-    print(f"Accuracy after training: {acc}")
-    
-    plots.plot_throughput(acc)
+    plots.plot_accuracy_noise_MNIST()

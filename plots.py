@@ -1078,3 +1078,62 @@ def plot_throughput(baseline):
     trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(dataset)) if targets[i] != -1] #also need to recheck if we need this
     
     train_loader = torch.utils.data.DataLoader(trainset, batch_size=256, num_workers=num_workers, shuffle=True)
+    
+    
+    
+def plot_accuracy_noise_MNIST():
+    
+    pate_data.create_Gaussian_noise("MNIST", 300000)
+    epsilon_list = [5, 10, 20, 30, 50, 70, 100] 
+    np.set_printoptions(suppress=True)
+    
+    target_dataset = "MNIST"
+    nb_teachers=200
+    params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 5, "delta" : 1e-5}
+    
+    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset="noise_MNIST", nb_teachers=nb_teachers)
+   
+    #then perform inference PATE
+   
+    noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format("noise_MNIST"))
+    
+    noise_vote_array = noise_vote_array.T
+    noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format("noise_MNIST")
+   
+    gaussian_list=[[] for e in epsilon_list]
+    
+    for j in range(3):
+        for i, eps in enumerate(epsilon_list):
+            
+            #gaussian noise
+            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=noise_label_path)
+            final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset="noise_MNIST", n_epochs=50)
+            num_answered = (pate_labels != -1).sum()
+            gaussian_list[i].append((round(achieved_eps, 3), round(final_acc, 3), num_answered))
+            
+    print("gaussian list")
+    print(gaussian_list)
+    
+    headers = ['eps=5', 'eps=10', "eps=20", "eps=30", "eps=50", "eps=70", "eps=100"]
+    row_labels = ["mean: eps, acc, ans", "var: eps, acc, ans"]
+    values = [
+        [np.mean(gaussian_list[0], axis=0), np.mean(gaussian_list[1], axis=0), np.mean(gaussian_list[2], axis=0) , np.mean(gaussian_list[3], axis=0)],
+        [np.std(gaussian_list[0], axis=0), np.std(gaussian_list[1], axis=0), np.std(gaussian_list[2], axis=0) , np.std(gaussian_list[3], axis=0)]
+    ]
+    
+    fig, ax = plt.subplots(figsize=(30, 10))
+
+    # Hide the axes
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    ax.set_frame_on(False)
+
+    # Create the table
+    table = ax.table(cellText=values, colLabels=headers, rowLabels=row_labels, loc='center', cellLoc='center')
+
+    # Adjust layout
+    plt.subplots_adjust(left=0.2, top=0.8)
+
+    # Save the table to a file
+    plt.savefig('maxiumum_range.png')
+    
