@@ -251,9 +251,14 @@ def show_images(num=5, padding=1):
     print(labels)
     
     
-def show_images_MNIST(num=5, padding=1):
-    teacher_label_path = LOG_DIR_DATA + "/teacher_labels/noise_MNIST.npy"
-    data_path = LOG_DIR_DATA + "/noise_MNIST.npy"
+def show_images(dataset="noise_MNIST", num=5, padding=1):
+    
+    if dataset == "dead_leaves":
+        teacher_dataset = "dead_leaves"
+        dataset = "dead_leaves-mixed"
+    
+    teacher_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(teacher_dataset)
+    data_path = LOG_DIR_DATA + "/{}.npy".format(dataset)
     
     teacher_labels = np.load(teacher_label_path)
     data = np.load(data_path)
@@ -272,7 +277,7 @@ def show_images_MNIST(num=5, padding=1):
             normalized_array = ((im - min_val) / (max_val - min_val) * 255).astype(np.uint8)
         
             new_image = Image.fromarray(normalized_array, mode="L")
-            save_path = LOG_DIR + "/Images/MNIST"+ str(i)+".jpeg"
+            save_path = LOG_DIR + "/Images/{}".format(dataset)+ str(i)+".jpeg"
             
             labels.append(teacher_labels[i])
             
@@ -296,7 +301,7 @@ def show_images_MNIST(num=5, padding=1):
         y = row * (height + padding)
         grid_image.paste(img, (x, y))
     
-    save_path = os.path.join(LOG_DIR, "Images", "SVHN_grid.jpeg")
+    save_path = os.path.join(LOG_DIR, "Images", "{}_grid.jpeg".format(dataset))
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     grid_image.save(save_path)
     print(labels)    

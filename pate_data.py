@@ -14,7 +14,7 @@ LOG_DIR = "/storage3/michel"
 LOG_DIR_MODEL = "/storage3/michel"
 #this file performs the data processing
 
-def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int):
+def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int, BN_trick=True):
     """queries the teacher ensemble for labels about a specific dataset
 
     Args:
@@ -42,7 +42,7 @@ def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int):
         teacher_nw = torch.load(teacher_path)
         teacher_nw = teacher_nw.to(device)
         
-        if experiment_config['BN_trick']:
+        if experiment_config['BN_trick'] and BN_trick:
             teacher_nw.train() #set model to training mode, batchnorm trick
         
         testindex = 0

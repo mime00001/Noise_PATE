@@ -86,12 +86,12 @@ def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200,
         print(f"Accuracy with transfer dataset: {transfer_acc}")
 
 
-def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb_teachers=200, params=None, epsilon=20):
+def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb_teachers=200, params=None, epsilon=20, BN_trick=True):
     
     if not params:
-        if transfer_dataset=="FMNIST":
-            params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": epsilon, "delta" : 1e-5}
-        elif target_dataset =="MNIST": 
+        #if transfer_dataset=="FMNIST":
+         #   params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": epsilon, "delta" : 1e-5}
+        if target_dataset =="MNIST": 
             params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset =="CIFAR10": 
             params = {"threshold": 100, "sigma_threshold": 30, "sigma_gnmax": 10, "epsilon": epsilon, "delta" : 1e-5}
@@ -100,7 +100,7 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
         else:
             params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
 
-    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers)
+    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick)
     noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format(transfer_dataset))
     noise_vote_array = noise_vote_array.T
     
@@ -111,7 +111,7 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
     print(len(noise_votes))
     
     #then train the student on Gaussian noise    
-    finalacc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params)
+    finalacc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=30, lr=0.001, optimizer="Adam", kwargs=params)
     return finalacc, num_answered
     
 
@@ -119,4 +119,8 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
 
 if __name__ == '__main__':
     #full_run("MNIST", "noise_MNIST", 200, train_teachers=True, epsilon=10, compare=True)
-    plots.plot_accuracy_noise_MNIST()
+    #plots.create_first_table()
+    
+    only_transfer_set("MNIST", "stylegan", epsilon=10, BN_trick=True)
+    
+   

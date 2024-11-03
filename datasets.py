@@ -352,15 +352,36 @@ def get_dead_leaves_PATE(batch_size):
     
     return train_loader, train_loader, train_loader #return same dataloader so i dont have to rewrite function
 
-
-def get_stylegan_oriented(batch_size):
+def get_stylegan_PATE(batch_size):
     
+    """ path = LOG_DIR_DATA + "/stylegan-oriented/"
+    
+    images=[]
     
     for image in os.listdir(path):
         images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
         
     #need to be normalized before putting into network
-    images = np.array(images)
+    images = np.array(images) """
+    
+    
+    
+    num_workers=4
+    
+    path = LOG_DIR_DATA + "/stylegan-oriented.npy"
+    
+    images = np.load(path)
+    
+    mean = images.mean()
+    std = images.std()
+    
+    train_data = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(0)) for i in range(len(images))]
+    
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    
+    return train_loader, train_loader, train_loader
+    
+    
 #these datasets are for training the student, they need the teacher_labels saved in the folder /teacher_labels/ to work
 #
 
@@ -634,6 +655,48 @@ def get_dead_leaves_student(batch_size, validation_size=0.2):
     
     return train_loader, valid_loader, test_loader
 
+def get_stylegan_student(batch_size, validation_size=0.2):
+    num_workers=4
 
 
+    path = LOG_DIR_DATA + "/stylegan-oriented.npy"
+    target_path = LOG_DIR_DATA + "/teacher_labels/stylegan.npy"
+    
+    targets = np.load(target_path)
+    
+    images = np.load(path)
+    
+    """ #load .jpg dead_leave images and turn into grayscale and reduce dimension so it can be used for MNIST
+    for image in os.listdir(path):
+        images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
+        
+    #need to be normalized before putting into network
+    images = np.array(images) """
+    
+    assert len(images) == len(targets)
+    mean = images.mean()
+    std = images.std()
+    
+    transform_test = transforms.Compose([
+         transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+    
+    testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    
+    trainset = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(images)) if targets[i] != -1] #also need to recheck if we need this
+    
+    print("Number of samples for student training: {}".format(len(trainset)))
+    
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    
+    
+    return train_loader, valid_loader, test_loader
 
+""" for image in os.listdir(path):
+        images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
+        
+    #need to be normalized before putting into network
+    images = np.array(images) """

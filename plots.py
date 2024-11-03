@@ -34,7 +34,7 @@ def create_first_table():
     
     vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=target_dataset, nb_teachers=nb_teachers)
     
-    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset="noise_MNIST", nb_teachers=nb_teachers)
+    #noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset="noise_MNIST", nb_teachers=nb_teachers)
     
     f_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset="FMNIST", nb_teachers=nb_teachers)
     
@@ -54,7 +54,7 @@ def create_first_table():
     label_path = LOG_DIR_DATA + "/teacher_labels/MNIST.npy"
     noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format("noise_MNIST")
     fmnist_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format("FMNIST")
-    epsilon_list = [5, 8, 10, 20]
+    epsilon_list = [5, 10, 20, 30, 50, 70, 100, 1000]
     
     public_list=[[] for e in epsilon_list]
     gaussian_list=[[] for e in epsilon_list]
@@ -97,6 +97,45 @@ def create_first_table():
         [np.mean(FMNIST_list[0], axis=0), np.mean(FMNIST_list[1], axis=0), np.mean(FMNIST_list[2], axis=0), np.mean(FMNIST_list[3], axis=0)]
     ]
     
+    
+    mean_vals_g = [np.mean(gaussian_list[i], axis=0) for i in range(len(gaussian_list))]
+    std_vals_g = [np.std(gaussian_list[i], axis=0) for i in range(len(gaussian_list))]
+    
+    mean_vals_f = [np.mean(FMNIST_list[i], axis=0) for i in range(len(FMNIST_list))]
+    std_vals_f= [np.std(FMNIST_list[i], axis=0) for i in range(len(FMNIST_list))]
+    
+    mean_vals_p = [np.mean(public_list[i], axis=0) for i in range(len(public_list))]
+    std_vals_p= [np.std(public_list[i], axis=0) for i in range(len(public_list))]
+    
+    
+    achieved_eps_g=[m[0] for m in mean_vals_g]
+    achieved_eps_f=[m[0] for m in mean_vals_f]
+    achieved_eps_p=[m[0] for m in mean_vals_p]
+    
+    
+    accs_g = [m[1] for m in mean_vals_g]
+    accs_f = [m[1] for m in mean_vals_f]
+    accs_p = [m[1] for m in mean_vals_p]
+    
+    
+    
+    plt.plot(achieved_eps_g, accs_g, label="Gaussian noise", color="green")
+    plt.plot(achieved_eps_f, accs_f, label="FMNIST", color="blue")
+    plt.plot(achieved_eps_p, accs_p, label="Public MNIST", color="orange")
+        
+
+    plt.xlabel('Epsilon')
+    plt.ylabel('Accuracy')
+    plt.title('Accuracy vs Epsilon')
+    plt.legend()
+    plt.ylim(0, 1)
+
+    plt.savefig("max_range_plot.png")
+    
+    
+    
+    
+    """ 
     fig, ax = plt.subplots(figsize=(30, 10))
 
     # Hide the axes
@@ -136,7 +175,7 @@ def create_first_table():
 
     # Save the table to a file
     plt.savefig('table 1_std_cs.png')
-
+    """
 
 def create_same_diff_init_table():
     np.set_printoptions(suppress=True)
@@ -1083,15 +1122,15 @@ def plot_throughput(baseline):
     
 def plot_accuracy_noise_MNIST():
     
-    pate_data.create_Gaussian_noise("MNIST", 300000)
-    epsilon_list = [5, 10, 20, 30, 50, 70, 100] 
+    #pate_data.create_Gaussian_noise("MNIST", 800000)
+    epsilon_list = [5, 10, 20, 30, 50, 70, 100, 1000] 
     np.set_printoptions(suppress=True)
     
     target_dataset = "MNIST"
     nb_teachers=200
     params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 5, "delta" : 1e-5}
     
-    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset="noise_MNIST", nb_teachers=nb_teachers)
+    #noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset="noise_MNIST", nb_teachers=nb_teachers)
    
     #then perform inference PATE
    
@@ -1114,13 +1153,19 @@ def plot_accuracy_noise_MNIST():
     print("gaussian list")
     print(gaussian_list)
     
-    headers = ['eps=5', 'eps=10', "eps=20", "eps=30", "eps=50", "eps=70", "eps=100"]
+    headers = ['eps=5', 'eps=10', "eps=20", "eps=30", "eps=50", "eps=70", "eps=100", "eps=1000"]
     row_labels = ["mean: eps, acc, ans", "var: eps, acc, ans"]
-    values = [
-        [np.mean(gaussian_list[0], axis=0), np.mean(gaussian_list[1], axis=0), np.mean(gaussian_list[2], axis=0) , np.mean(gaussian_list[3], axis=0)],
-        [np.std(gaussian_list[0], axis=0), np.std(gaussian_list[1], axis=0), np.std(gaussian_list[2], axis=0) , np.std(gaussian_list[3], axis=0)]
-    ]
     
+    mean_vals = [np.mean(gaussian_list[i], axis=0) for i in range(len(gaussian_list))]
+    std_vals = [np.std(gaussian_list[i], axis=0) for i in range(len(gaussian_list))]
+    
+    achieved_eps_list=[m[0] for m in mean_vals]
+    
+    values = [
+        mean_vals,
+        std_vals
+    ]
+    """ 
     fig, ax = plt.subplots(figsize=(30, 10))
 
     # Hide the axes
@@ -1136,4 +1181,16 @@ def plot_accuracy_noise_MNIST():
 
     # Save the table to a file
     plt.savefig('maxiumum_range.png')
+     """
     
+    accs = [m[1] for m in mean_vals]
+    
+    plt.plot(achieved_eps_list, accs)
+
+    plt.xlabel('Epsilon')
+    plt.ylabel('Accuracy')
+    plt.title('Accuracy vs Epsilon')
+    plt.legend()
+    plt.ylim(0, 1)
+
+    plt.savefig("max_range_plot.png")
