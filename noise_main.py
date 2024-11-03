@@ -121,6 +121,7 @@ if __name__ == '__main__':
     #full_run("MNIST", "noise_MNIST", 200, train_teachers=True, epsilon=10, compare=True)
     #plots.create_first_table()
     
-    only_transfer_set("MNIST", "stylegan", epsilon=10, BN_trick=True)
+    
+    only_transfer_set("MNIST", "SVHN_MNIST", epsilon=10, BN_trick=True)
     
    
