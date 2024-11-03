@@ -388,7 +388,7 @@ def get_SVHN_MNIST_PATE(batch_size):
     trainset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="train", download=True) #, transform=transform_train
     testset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="test", download=True) #, transform=transform_test
 
-    images = trainset.data()
+    images = [Image.fromarray(image, "RGB") for image in trainset.data]
     
     gray_images = [ImageOps.grayscale(image.resize((28, 28))) for image in images]
     
@@ -725,7 +725,7 @@ def get_SVHN_MNIST_student(batch_size, validation_size=0.2):
 
     trainset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="train", download=True) #, transform=transform_train
 
-    images = trainset.data()
+    images = [Image.fromarray(image, "RGB") for image in trainset.data]
     
     gray_images = [ImageOps.grayscale(image.resize((28, 28))) for image in images]
     
