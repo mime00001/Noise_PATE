@@ -396,7 +396,7 @@ def get_SVHN_MNIST_PATE(batch_size):
     mean = gray_images.mean()
     std = gray_images.std()
     
-    trainset = [(torch.FloatTensor((gray_images[i]- mean)/std), torch.tensor(0)) for i in range(len(gray_images))]
+    trainset = [(torch.FloatTensor((gray_images[i]- mean)/std).unsqueeze(0), torch.tensor(0)) for i in range(len(gray_images))]
     
     train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=False)
