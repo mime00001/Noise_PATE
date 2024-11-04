@@ -12,7 +12,7 @@ import pate_main
 import distill_gaussian
 
 import matplotlib.pyplot as plt
-from PIL import Image
+from PIL import Image, ImageOps
 import datasets
 import torchvision
 import torchvision.transforms as transforms
@@ -380,3 +380,24 @@ def table1_help():
 
     # Save the table to a file
     plt.savefig('table 1_std.png')
+
+
+def print_SVHN_MNIST():
+    
+    trainset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="train", download=True) #, transform=transform_train
+    
+    print("test")
+    
+    print(trainset.data[0].shape)
+    
+    images = [Image.fromarray(np.transpose(trainset.data[image], (1, 2, 0))) for image in range(len(trainset.data))]
+    
+    for i in range(10):
+        save_path = LOG_DIR + "/Images/{}/".format("SVHN_MNIST")+ str(i)+"SVHN.jpeg"
+        images[i].save(save_path)
+    
+    gray_images = [ImageOps.grayscale(image.resize((28, 28))) for image in images]
+    
+    for i in range(10):
+        save_path = LOG_DIR + "/Images/{}/".format("SVHN_MNIST")+ str(i)+".jpeg"
+        gray_images[i].save(save_path)

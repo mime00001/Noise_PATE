@@ -7,12 +7,13 @@ import datasets, models
 import distill_gaussian
 
 import os
+import pickle
 import random
 import numpy as np
 import matplotlib.pyplot as plt
 import torch, torchvision
 import torchvision.transforms as transforms
-
+from PIL import Image, ImageOps
 
 LOG_DIR_DATA = "/storage3/michel/data"
 LOG_DIR = "/storage3/michel"
@@ -37,7 +38,7 @@ def compare_datasets_BN_trick():
     #also should reduce the amount of Gaussian noise back to 60.000
     epsilon = 10
     target_dataset = "MNIST"
-    query_datasets = ["noise_MNIST", "dead_leaves", "FractalDB", "StyleGAN", "FMNIST", "MNIST"]
+    query_datasets = ["noise_MNIST", "dead_leaves", "FractalDB", "stylegan", "Shaders21k", "FMNIST", "MNIST"]
     
     accuracies_wo_BN_trick = {}
     accuracies_with_BN_trick = {}
@@ -49,8 +50,7 @@ def compare_datasets_BN_trick():
     
     pate_data.create_Gaussian_noise(target_dataset, 60000)   
     params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": 5, "delta" : 1e-5}
-    fmnist_params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": 5, "delta" : 1e-5} 
-    
+
     #then train the student on the data labeled without BN_trick
     
     for ds in query_datasets:
@@ -58,11 +58,8 @@ def compare_datasets_BN_trick():
         vote_array = vote_array.T
         label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
         
-        if ds == "FMNIST":
-            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=fmnist_params["threshold"], sigma_threshold=fmnist_params["sigma_threshold"], sigma_gnmax=fmnist_params["sigma_gnmax"], epsilon=epsilon, delta=fmnist_params["delta"], num_classes=10, savepath=label_path)
-        else:
-            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=epsilon, delta=params["delta"], num_classes=10, savepath=label_path)
-        final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=target_dataset, n_epochs=50)
+        achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=epsilon, delta=params["delta"], num_classes=10, savepath=label_path)
+        final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds, n_epochs=50)
         
         accuracies_wo_BN_trick[ds] = final_acc
     
@@ -72,11 +69,10 @@ def compare_datasets_BN_trick():
         vote_array = vote_array.T
         label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
         
-        if ds == "FMNIST":
-            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=fmnist_params["threshold"], sigma_threshold=fmnist_params["sigma_threshold"], sigma_gnmax=fmnist_params["sigma_gnmax"], epsilon=epsilon, delta=fmnist_params["delta"], num_classes=10, savepath=label_path)
-        else:
-            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=epsilon, delta=params["delta"], num_classes=10, savepath=label_path)
-        final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=target_dataset, n_epochs=50)
+        
+        
+        achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=epsilon, delta=params["delta"], num_classes=10, savepath=label_path)
+        final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds, n_epochs=50)
         
         accuracies_with_BN_trick[ds] = final_acc
     
@@ -102,3 +98,114 @@ def compare_datasets_BN_trick():
     plt.savefig("OODness_influence.png")
     
     return None
+
+
+def final_plot():
+    
+    epsilon_range = [5, 8, 10, 20]
+    target_dataset = "MNIST"
+    query_datasets = ["noise_MNIST", "dead_leaves", "FractalDB", "stylegan", "Shaders21k", "FMNIST", "MNIST"]
+    
+    accuracies_wo_BN_trick = {}
+    accuracies_with_BN_trick = {}
+    
+    for ds in query_datasets:
+        accuracies_wo_BN_trick[ds] = [0 for e in epsilon_range]
+        accuracies_with_BN_trick[ds] = [0 for e in epsilon_range]
+    
+    
+    #pate_data.create_Gaussian_noise(target_dataset, 60000)   
+    #then train the student on the data labeled without BN_trick
+    for i, eps in enumerate(epsilon_range):    
+        for ds in query_datasets:
+            
+            params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
+            if ds=="FMNIST":
+                params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
+                
+            vote_array = pate_data.query_teachers(target_dataset, ds, 200, False)
+            vote_array = vote_array.T
+            label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
+            
+            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
+            final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds, n_epochs=50)
+            
+            accuracies_wo_BN_trick[ds][i] = final_acc
+        
+        
+        for ds in query_datasets:
+            vote_array = pate_data.query_teachers(target_dataset, ds, 200, True)
+            vote_array = vote_array.T
+            label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
+            
+            
+            
+            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
+            final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds, n_epochs=50)
+            
+            accuracies_with_BN_trick[ds][i] = final_acc
+        
+    
+    #display them in the table as well
+    for key, value in accuracies_wo_BN_trick.items():
+        print(f"RS: {key}: {value}")
+        
+    for key, value in accuracies_with_BN_trick.items():
+        print(f"CS: {key}: {value}")
+    
+    
+    with open("OODness_dictionaries.pkl", "wb") as f:
+        pickle.dump({"accuracies_wo": accuracies_wo_BN_trick, "accuracies_with": accuracies_with_BN_trick})
+    
+    
+    
+    
+
+
+def plot_datasets(dataset_name, num=8, spacing=5):
+    
+    
+    original_data_path = LOG_DIR_DATA + "/{}/".format(dataset_name)
+    
+    original_image = []
+    gray_image = []
+    
+    
+    i = 0
+    for image in os.listdir(original_data_path):
+        original_image.append(Image.open((original_data_path + image))) #.resize((28, 28))
+        gray_image.append(ImageOps.grayscale(Image.open((original_data_path + image))).resize((28, 28)))
+        i+=1
+        if i == num//2: break
+        
+    #need to be normalized before putting into network               
+    total_width = sum(img.width for img in original_image) + (len(original_image) - 1) * spacing
+
+    # Calculate the maximum height for each row
+    top_row_height = max(img.height for img in original_image)
+    bottom_row_height = max(img.height for img in gray_image)
+    total_height = top_row_height + bottom_row_height + spacing
+
+    # Create a blank image with the calculated dimensions
+    combined_image = Image.new("RGB", (total_width, total_height), "white")
+
+    # Paste the top row images
+    x_offset = 0
+    for top_img, bottom_img in zip(original_image, gray_image):
+        # Paste the top-row image
+       combined_image.paste(top_img, (x_offset, 0))
+        
+        # Calculate the x_offset to center the bottom image under the top image
+       bottom_x_offset = x_offset + (top_img.width - bottom_img.width) // 2
+        
+        # Paste the bottom image centered under the top image
+       y_offset = top_row_height + spacing
+       combined_image.paste(bottom_img, (bottom_x_offset, y_offset))
+        
+        # Update the x_offset for the next column
+       x_offset += top_img.width + spacing
+    
+    save_path = os.path.join(LOG_DIR, "Images", "{}_grid.jpeg".format(dataset_name))
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    combined_image.save(save_path)  
+    
