@@ -14,8 +14,9 @@ import distill_gaussian
 import plots
 import experiments
 import workshop_plots
-
 import datasets
+
+import pickle
 import torchvision
 import torchvision.transforms as transforms
 import torch
@@ -123,7 +124,7 @@ if __name__ == '__main__':
     #plots.create_first_table()
     
     #help.print_SVHN_MNIST()
-    only_transfer_set("MNIST", "Shaders21k", epsilon=10, BN_trick=True)
-    #workshop_plots.compare_datasets_BN_trick()
+    #only_transfer_set("MNIST", "Shaders21k", epsilon=10, BN_trick=True)
+    workshop_plots.final_plot()
 
    

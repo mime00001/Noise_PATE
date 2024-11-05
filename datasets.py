@@ -433,9 +433,9 @@ def get_FractalDB_PATE(batch_size):
     return train_loader, train_loader, train_loader
 
 def get_Shaders21k_PATE(batch_size):
-    path = LOG_DIR_DATA + "/shaders21k/"
+    """ path = LOG_DIR_DATA + "/shaders21k/"
     
-    """ images=[]
+    images=[]
     for image in os.listdir(path):
         images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
         
@@ -456,7 +456,7 @@ def get_Shaders21k_PATE(batch_size):
     mean = images.mean()
     std = images.std()
     
-    num_points = 100.000
+    num_points = 100000
     if len(images) < num_points:
         num_points = len(images)
     
@@ -883,7 +883,7 @@ def get_Shaders21k_student(batch_size, validation_size=0.2):
     #need to be normalized before putting into network
     images = np.array(images) """
     
-    assert len(images) == len(targets)
+    assert 100000 == len(targets)
     mean = images.mean()
     std = images.std()
     
@@ -894,7 +894,7 @@ def get_Shaders21k_student(batch_size, validation_size=0.2):
     
     testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
     
-    num_points = 100.000
+    num_points = 100000
     if len(images) < num_points:
         num_points = len(images)
         

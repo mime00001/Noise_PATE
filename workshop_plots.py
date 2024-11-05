@@ -116,29 +116,33 @@ def final_plot():
     
     #pate_data.create_Gaussian_noise(target_dataset, 60000)   
     #then train the student on the data labeled without BN_trick
-    for i, eps in enumerate(epsilon_range):    
-        for ds in query_datasets:
-            
+       
+    for ds in query_datasets:
+        vote_array = pate_data.query_teachers(target_dataset, ds, 200, False)
+        vote_array = vote_array.T
+        for i, eps in enumerate(epsilon_range): 
             params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
             if ds=="FMNIST":
                 params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
                 
-            vote_array = pate_data.query_teachers(target_dataset, ds, 200, False)
-            vote_array = vote_array.T
+            
             label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
             
             achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
             final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds, n_epochs=50)
             
             accuracies_wo_BN_trick[ds][i] = final_acc
-        
-        
-        for ds in query_datasets:
-            vote_array = pate_data.query_teachers(target_dataset, ds, 200, True)
-            vote_array = vote_array.T
+    
+    
+    for ds in query_datasets:
+        vote_array = pate_data.query_teachers(target_dataset, ds, 200, True)
+        vote_array = vote_array.T
+        for i, eps in enumerate(epsilon_range): 
+            params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
+            if ds=="FMNIST":
+                params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
+                
             label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
-            
-            
             
             achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
             final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds, n_epochs=50)
@@ -155,7 +159,7 @@ def final_plot():
     
     
     with open("OODness_dictionaries.pkl", "wb") as f:
-        pickle.dump({"accuracies_wo": accuracies_wo_BN_trick, "accuracies_with": accuracies_with_BN_trick})
+        pickle.dump({"accuracies_wo": accuracies_wo_BN_trick, "accuracies_with": accuracies_with_BN_trick}, f)
     
     
     
