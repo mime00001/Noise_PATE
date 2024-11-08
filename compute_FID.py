@@ -48,7 +48,8 @@ def prep_dataset(datasetname, length=500):
     
     traindata =  [torch.tensor((data[i]- mean)/std, dtype=torch.uint8).unsqueeze(0) for i in range(length)]
     traindata = torch.stack(traindata)
-    traindata = traindata.unsqueeze(1)
+    print(traindata.shape)
+    #traindata = traindata.unsqueeze(1)
     traindata = traindata.repeat(1, 3, 1, 1)
     
 

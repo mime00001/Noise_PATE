@@ -127,5 +127,4 @@ if __name__ == '__main__':
     #help.print_SVHN_MNIST()
     #only_transfer_set("MNIST", "Shaders21k", epsilon=10, BN_trick=True)
     #workshop_plots.compare_datasets_BN_trick()
-    compute_FID.FID_MNIST()
-   
+    workshop_plots.compare_FID_scores()

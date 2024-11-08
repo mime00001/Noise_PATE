@@ -217,10 +217,9 @@ def plot_datasets(dataset_name, num=8, spacing=5):
     combined_image.save(save_path)  
 
 
-def compare_FID_scores():
+def compare_FID_scores(length=500):
     
     data_names = ["noise_MNIST", "FMNIST", "dead_leaves-mixed", "stylegan-oriented", "FractalDB", "Shaders21k"]
-    length = 500
     
     
     base_data = compute_FID.prep_MNIST_test(length)
