@@ -219,16 +219,18 @@ def plot_datasets(dataset_name, num=8, spacing=5):
 
 def compare_FID_scores(length=500):
     
-    data_names = ["noise_MNIST", "FMNIST", "dead_leaves-mixed", "stylegan-oriented", "FractalDB", "Shaders21k"]
+    data_names = ["MNIST pub", "noise_MNIST", "FMNIST", "dead_leaves-mixed", "stylegan-oriented", "FractalDB", "Shaders21k"]
     
     
-    base_data = compute_FID.prep_MNIST_test(length)
+    base_data = compute_FID.prep_MNIST_train(length)
     
     fid_scores = {}
     
     for name in data_names:
         if name == "FMNIST":
             compare_data = compute_FID.prep_FMNIST(length)
+        elif name == "MNIST pub":
+            compare_data = compute_FID.prep_MNIST_test(length)
         else:
             compare_data = compute_FID.prep_dataset(name, length)
         fid_score = compute_FID.calculate_FID(base_data.to("cuda"), compare_data.to("cuda"))

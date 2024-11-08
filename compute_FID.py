@@ -39,6 +39,29 @@ def prep_MNIST_test(length=500):
     rgb_testset = torch.stack(rgb_testset)
     return rgb_testset
 
+def prep_MNIST_train(length=500):
+    transform_test = transforms.Compose([
+            transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+    testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_test)
+    
+    testset = testset.data.unsqueeze(1)
+    testset = testset.repeat(1,3, 1, 1)
+    
+    rgb_testset = []
+    for i in range(length):
+        image=testset[i]
+        
+        rgb_array = torch.tensor(image, dtype=torch.uint8)
+        rgb_testset.append(rgb_array)
+    rgb_testset = torch.stack(rgb_testset)
+    return rgb_testset
+
+
+
+
+
 def prep_dataset(datasetname, length=500):
     path = LOG_DIR_DATA + "/{}.npy".format(datasetname)
     
