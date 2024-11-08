@@ -5,6 +5,7 @@ from utils import teachers, misc
 import conventions
 import datasets, models
 import distill_gaussian
+import compute_FID
 
 import os
 import pickle
@@ -214,4 +215,26 @@ def plot_datasets(dataset_name, num=8, spacing=5):
     save_path = os.path.join(LOG_DIR, "Images", "{}_grid.jpeg".format(dataset_name))
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     combined_image.save(save_path)  
+
+
+def compare_FID_scores():
     
+    data_names = ["noise_MNIST", "FMNIST", "dead_leaves-mixed", "stylegan-oriented", "FractalDB", "Shaders21k"]
+    length = 500
+    
+    
+    base_data = compute_FID.prep_MNIST_test(length)
+    
+    fid_scores = {}
+    
+    for name in data_names:
+        if name == "FMNIST":
+            compare_data = compute_FID.prep_FMNIST(length)
+        else:
+            compare_data = compute_FID.prep_dataset(name, length)
+        fid_score = compute_FID.calculate_FID(base_data.to("cuda"), compare_data.to("cuda"))
+        fid_scores[name] = fid_score
+        
+    print(fid_scores)
+    with open("fid_scores.pkl", "wb") as f:
+        pickle.dump(fid_scores, f)

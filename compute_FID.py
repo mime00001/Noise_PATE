@@ -46,6 +46,20 @@ def prep_dataset(datasetname, length=500):
 
     return traindata
 
+def prep_FMNIST(length=500):
+    transform_test = transforms.Compose([
+            transforms.ToTensor(), # first, convert image to PyTorch tensor
+            transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
+    ])
+    testset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    rgb_testset = []
+    for i in range(length):
+        image=testset[i]
+        
+        rgb_array = torch.tensor(image, dtype=torch.uint8)
+        rgb_testset.append(rgb_array)
+    rgb_testset = torch.stack(rgb_testset)
+    return rgb_testset
 
 
 
