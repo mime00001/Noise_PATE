@@ -78,7 +78,7 @@ def compare_datasets_BN_trick():
     
     
     #sort the accuracies without batchnorm trick in ascending order, then sort the accuracies with batchnorm trick in the same way
-    dict(sorted(accuracies_wo_BN_trick.items(), key=lambda item: item[1]))
+    accuracies_wo_BN_trick = dict(sorted(accuracies_wo_BN_trick.items(), key=lambda item: item[1]))
     accuracies_with_BN_trick= {key: accuracies_with_BN_trick[key] for key in accuracies_wo_BN_trick}
     
     #now just display them
@@ -94,6 +94,8 @@ def compare_datasets_BN_trick():
     
     plt.scatter(data, acc_with, color="orange", label="Accuracies with BN trick")
     plt.plot(data, acc_with, color="orange", linestyle="dashed")
+    
+    plt.legend()
     
     plt.savefig("OODness_influence.png")
     
