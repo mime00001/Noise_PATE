@@ -48,6 +48,9 @@ def prep_dataset(datasetname, length=500):
     
     traindata =  [torch.tensor((data[i]- mean)/std).unsqueeze(0) for i in range(length)]
     
+    traindata = traindata.unsqueeze(1)
+    traindata = traindata.repeat(1, 3, 1, 1)
+    
     rgb_trainset=[]
     for i in range(length):
         image = traindata[i]
@@ -56,8 +59,7 @@ def prep_dataset(datasetname, length=500):
         rgb_trainset.append(rgb_array)
     traindata = torch.stack(rgb_trainset)
     
-    traindata = traindata.unsqueeze(1)
-    traindata = traindata.repeat(1, 3, 1, 1)
+    
 
     return traindata
 
@@ -68,7 +70,8 @@ def prep_FMNIST(length=500):
     ])
     testset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
     rgb_testset = []
-    
+    testset = testset.data.unsqueeze(1)
+    testset = testset.repeat(1, 3, 1, 1)
     for i in range(length):
         image=testset[i]
         
@@ -76,6 +79,10 @@ def prep_FMNIST(length=500):
         rgb_testset.append(rgb_array)
     rgb_testset = torch.stack(rgb_testset)
     return rgb_testset
+
+
+
+
 
 
 
