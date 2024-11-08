@@ -27,7 +27,7 @@ def prep_MNIST_test(length=500):
     ])
     testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
     
-    testset = testset.data.unsqueeze(0)
+    testset = testset.data.unsqueeze(1)
     testset = testset.repeat(1,3, 1, 1)
     
     rgb_testset = []
