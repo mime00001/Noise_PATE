@@ -18,7 +18,37 @@ def calculate_FID(dataset1_base, dataset2_dist):
     fid.update(dataset2_dist, real=False)
     return fid.compute()
     
+
+
+def prep_MNIST_test(length=500):
+    transform_test = transforms.Compose([
+            transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+    testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    rgb_testset = []
+    for i in range(length):
+        image=testset[i]
+        
+        rgb_array = torch.tensor(image, dtype=torch.uint8)
+        rgb_testset.append(rgb_array)
+    rgb_testset = torch.stack(rgb_testset)
+    return rgb_testset
+
+def prep_dataset(datasetname, length=500):
+    path = LOG_DIR_DATA + "/{}.npy".format(datasetname)
     
+    data = np.load(path)
+    mean = data.mean()
+    std = data.std()
+    
+    traindata = [torch.tensor((data[i]- mean)/std).unsqueeze(0) for i in range(length)]
+
+    return traindata
+
+
+
+
 def FID_MNIST():
     transform_train = transform=transforms.Compose([
         transforms.ToTensor(), # first, convert image to PyTorch tensor
@@ -55,7 +85,5 @@ def FID_MNIST():
         rgb_array = torch.tensor(image, dtype=torch.uint8)
         rgb_testset.append(rgb_array)
     rgb_testset = torch.stack(rgb_testset)
-
-
 
     print(calculate_FID(rgb_trainset.to("cuda"), rgb_testset.to("cuda")))
