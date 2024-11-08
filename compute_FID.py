@@ -26,6 +26,10 @@ def prep_MNIST_test(length=500):
         transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
     ])
     testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    
+    testset = testset.data.unsqueeze(0)
+    testset = testset.repeat(1,3, 1, 1)
+    
     rgb_testset = []
     for i in range(length):
         image=testset[i]
@@ -42,7 +46,10 @@ def prep_dataset(datasetname, length=500):
     mean = data.mean()
     std = data.std()
     
-    traindata = [torch.tensor((data[i]- mean)/std).unsqueeze(0) for i in range(length)]
+    traindata = torch.tensor([torch.tensor((data[i]- mean)/std).unsqueeze(0) for i in range(length)])
+
+    traindata = traindata.unsqueeze(1)
+    traindata = traindata.repeat(1, 3, 1, 1)
 
     return traindata
 
@@ -53,6 +60,7 @@ def prep_FMNIST(length=500):
     ])
     testset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
     rgb_testset = []
+    
     for i in range(length):
         image=testset[i]
         
