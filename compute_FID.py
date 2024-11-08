@@ -46,19 +46,10 @@ def prep_dataset(datasetname, length=500):
     mean = data.mean()
     std = data.std()
     
-    traindata =  [torch.tensor((data[i]- mean)/std).unsqueeze(0) for i in range(length)]
-    traindata = torch.FloatTensor(traindata)
+    traindata =  [torch.tensor((data[i]- mean)/std, dtype=torch.uint8).unsqueeze(0) for i in range(length)]
+    traindata = torch.stack(traindata)
     traindata = traindata.unsqueeze(1)
     traindata = traindata.repeat(1, 3, 1, 1)
-    
-    rgb_trainset=[]
-    for i in range(length):
-        image = traindata[i]
-       
-        rgb_array = torch.tensor(image, dtype=torch.uint8)
-        rgb_trainset.append(rgb_array)
-    traindata = torch.stack(rgb_trainset)
-    
     
 
     return traindata
