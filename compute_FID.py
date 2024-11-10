@@ -1,4 +1,5 @@
 from torchmetrics.image.fid import FrechetInceptionDistance
+from torchmetrics.image.kid import KernelInceptionDistance
 import torchvision.transforms as transforms
 import torchvision
 import numpy as np
@@ -17,6 +18,14 @@ def calculate_FID(dataset1_base, dataset2_dist):
     fid.update(dataset1_base, real=True)
     fid.update(dataset2_dist, real=False)
     return fid.compute()
+    
+def calculate_KID(dataset1_base, dataset2_dist):
+
+    kid = KernelInceptionDistance().to("cuda")
+    
+    kid.update(dataset1_base, real=True)
+    kid.update(dataset2_dist, real=False)
+    return kid.compute()
     
 
 
