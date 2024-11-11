@@ -103,7 +103,7 @@ def compare_datasets_BN_trick():
     return None
 
 
-def final_plot():
+def final_plot(num_reps=3):
     
     epsilon_range = [5, 8, 10, 20]
     target_dataset = "MNIST"
@@ -111,10 +111,14 @@ def final_plot():
     
     accuracies_wo_BN_trick = {}
     accuracies_with_BN_trick = {}
+    accuracies_wo_BN_trick_std = {}
+    accuracies_with_BN_trick_std = {}
     
     for ds in query_datasets:
-        accuracies_wo_BN_trick[ds] = [0 for e in epsilon_range]
-        accuracies_with_BN_trick[ds] = [0 for e in epsilon_range]
+        accuracies_wo_BN_trick[ds] = [[] for e in epsilon_range]
+        accuracies_with_BN_trick[ds] = [[] for e in epsilon_range]
+        accuracies_wo_BN_trick_std[ds] = [[] for e in epsilon_range]
+        accuracies_with_BN_trick_std[ds] = [[] for e in epsilon_range]
     
     
     #pate_data.create_Gaussian_noise(target_dataset, 60000)   
@@ -123,35 +127,47 @@ def final_plot():
     for ds in query_datasets:
         vote_array = pate_data.query_teachers(target_dataset, ds, 200, False)
         vote_array = vote_array.T
-        for i, eps in enumerate(epsilon_range): 
-            params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
-            if ds=="FMNIST":
-                params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
+        
+        for i in range(num_reps):
+            
+            for i, eps in enumerate(epsilon_range): 
+                params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
+                if ds=="FMNIST":
+                    params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
+                    
                 
-            
-            label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
-            
-            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
-            final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds, n_epochs=50)
-            
-            accuracies_wo_BN_trick[ds][i] = final_acc
+                label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
+                
+                achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
+                final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds, n_epochs=50)
+                
+                accuracies_wo_BN_trick[ds][i].append(final_acc)
     
     
     for ds in query_datasets:
         vote_array = pate_data.query_teachers(target_dataset, ds, 200, True)
         vote_array = vote_array.T
-        for i, eps in enumerate(epsilon_range): 
-            params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
-            if ds=="FMNIST":
-                params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
-                
-            label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
-            
-            achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
-            final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds, n_epochs=50)
-            
-            accuracies_with_BN_trick[ds][i] = final_acc
         
+        for i in range(num_reps):
+            
+            for i, eps in enumerate(epsilon_range): 
+                params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
+                if ds=="FMNIST":
+                    params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
+                    
+                label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
+                
+                achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
+                final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds, n_epochs=50)
+                
+                accuracies_with_BN_trick[ds][i].append(final_acc)
+    
+    for ds in query_datasets:
+        for i, eps in enumerate(epsilon_range):
+            accuracies_with_BN_trick_std[ds][i] = np.std(accuracies_with_BN_trick[ds][i])
+            accuracies_with_BN_trick[ds][i] = np.mean(accuracies_with_BN_trick[ds][i])
+            accuracies_wo_BN_trick_std[ds][i] = np.std(accuracies_wo_BN_trick[ds][i])
+            accuracies_wo_BN_trick[ds][i] = np.mean(accuracies_wo_BN_trick[ds][i])
     
     #display them in the table as well
     for key, value in accuracies_wo_BN_trick.items():
@@ -162,7 +178,8 @@ def final_plot():
     
     
     with open("OODness_dictionaries.pkl", "wb") as f:
-        pickle.dump({"accuracies_wo": accuracies_wo_BN_trick, "accuracies_with": accuracies_with_BN_trick}, f)
+        pickle.dump({"accuracies_wo": accuracies_wo_BN_trick, "accuracies_wo_std": accuracies_wo_BN_trick_std,
+                     "accuracies_with": accuracies_with_BN_trick, "accuracies_with_std": accuracies_with_BN_trick_std}, f)
     
     
     
