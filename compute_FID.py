@@ -21,7 +21,7 @@ def calculate_FID(dataset1_base, dataset2_dist):
     
 def calculate_KID(dataset1_base, dataset2_dist):
 
-    kid = KernelInceptionDistance().to("cuda")
+    kid = KernelInceptionDistance(subsets=10, subset_size=500).to("cuda")
     
     kid.update(dataset1_base, real=True)
     kid.update(dataset2_dist, real=False)

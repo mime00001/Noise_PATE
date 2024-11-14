@@ -192,7 +192,8 @@ def final_plot(num_reps=3):
     
     with open("OODness_dictionaries.pkl", "wb") as f:
         pickle.dump({"accuracies_wo": accuracies_wo_BN_trick, "accuracies_wo_std": accuracies_wo_BN_trick_std,
-                     "accuracies_with": accuracies_with_BN_trick, "accuracies_with_std": accuracies_with_BN_trick_std}, f)
+                     "accuracies_with": accuracies_with_BN_trick, "accuracies_with_std": accuracies_with_BN_trick_std,
+                     "num_answered_wo": num_answered_wo, "num_answered_with": num_answered_with}, f)
     
     
     
