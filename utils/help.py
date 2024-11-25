@@ -74,10 +74,10 @@ def run_parameter_search(path="/vote_array/noise_SVHN.npy", savepath="./pate_par
     noise_vote_array = np.load(noise_vote_array_path)
     noise_vote_array=noise_vote_array.T
     
-    threshold_list = [50, 70, 100, 120] #
-    sigma_threshold_list = [30, 50, 70] # 
-    sigma_gnmax_list = [10, 20, 40]
-    epsilon_list = [3, 5, 10]
+    threshold_list = [70, 100, 120, 150] #
+    sigma_threshold_list = [70, 100, 120] # 
+    sigma_gnmax_list = [20, 30, 40]
+    epsilon_list = [5, 10, 20]
     delta_list =[1e-5]
     num_classes=10
     
