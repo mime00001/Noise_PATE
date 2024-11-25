@@ -536,8 +536,7 @@ def get_MIX_PATE(batch_size):
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     
     return train_loader, train_loader, train_loader
-    
-    
+        
 def get_dead_leaves_SVHN_PATE(batch_size):
     num_workers=4
     
@@ -598,7 +597,33 @@ def get_Shaders21k_SVHN_PATE(batch_size):
     
     return train_loader, train_loader, train_loader
     
+def get_stylegan_SVHN_PATE(batch_size):
+    num_workers=4
+    path = LOG_DIR_DATA + "/stylegan-oriented/"
     
+    images=[]
+    
+    for image in os.listdir(path):
+        images.append(Image.open(path + image).resize((32, 32)))
+        
+    #need to be normalized before putting into network
+    images = np.array(images) 
+    
+    path = LOG_DIR_DATA + "/stylegan_SVHN.npy"
+    np.save(path, images)
+    
+    path = LOG_DIR_DATA + "/stylegan_SVHN.npy" 
+     
+    images= np.load(path)
+    
+    mean = images.mean()
+    std = images.std()
+    
+    train_data = [(torch.FloatTensor((images[i]- mean)/std).permute(2, 0, 1), torch.tensor(0)) for i in range(len(images))]
+    
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    
+    return train_loader, train_loader, train_loader
 #these datasets are for training the student, they need the teacher_labels saved in the folder /teacher_labels/ to work
 #
 
@@ -1080,8 +1105,98 @@ def get_MIX_student(batch_size, validation_size=0.2):
     
     return train_loader, valid_loader, test_loader
     
+def get_dead_leaves_SVHN_student(batch_size, validation_size=0.2):
     
+    num_workers = 4
+    path = LOG_DIR_DATA + "/dead_leaves-mixed_SVHN.npy"
+    target_path = LOG_DIR_DATA + "/teacher_labels/dead_leaves_SVHN.npy"
     
+    targets = np.load(target_path)
+    
+    images = np.load(path)
+    
+    num_points = 100000
+    if len(images) < num_points:
+        num_points = len(images)
+
+    mean = images.mean()
+    std = images.std()
+    trainset = [(torch.FloatTensor((images[i]- mean)/std).permute(2, 0, 1), torch.tensor(targets[i])) for i in range(num_points) if targets[i] != -1]
+    
+    print("Number of samples for student training: {}".format(len(trainset)))
+    
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.45207793, 0.45359373, 0.45602703), (0.22993235, 0.229334, 0.2311905)),
+    ])
+    
+    testset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="test", download=True, transform=transform_test) #, transform=transform_test
+
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    
+    return train_loader, valid_loader, test_loader
+
+def get_Shaders21k_SVHN_student(batch_size, validation_size=0.2):
+    num_workers = 4
+    path = LOG_DIR_DATA + "/Shaders21k_SVHN.npy"
+    target_path = LOG_DIR_DATA + "/teacher_labels/Shaders21k_SVHN.npy"
+    
+    targets = np.load(target_path)
+    
+    images = np.load(path)
+
+    mean = images.mean()
+    std = images.std()
+    trainset = [(torch.FloatTensor((images[i]- mean)/std).permute(2, 0, 1), torch.tensor(targets[i])) for i in range(len(images)) if targets[i] != -1]
+    
+    print("Number of samples for student training: {}".format(len(trainset)))
+    
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.45207793, 0.45359373, 0.45602703), (0.22993235, 0.229334, 0.2311905)),
+    ])
+    
+    testset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="test", download=True, transform=transform_test) #, transform=transform_test
+
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    
+    return train_loader, valid_loader, test_loader
+    
+def get_stylegan_SVHN_student(batch_size, validation_size=0.2):
+    
+    num_workers = 4
+    path = LOG_DIR_DATA + "/stylegan_SVHN.npy"
+    target_path = LOG_DIR_DATA + "/teacher_labels/stylegan_SVHN.npy"
+    
+    targets = np.load(target_path)
+    
+    images = np.load(path)
+
+    mean = images.mean()
+    std = images.std()
+    trainset = [(torch.FloatTensor((images[i]- mean)/std).permute(2, 0, 1), torch.tensor(targets[i])) for i in range(len(images)) if targets[i] != -1]
+    
+    print("Number of samples for student training: {}".format(len(trainset)))
+    
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.45207793, 0.45359373, 0.45602703), (0.22993235, 0.229334, 0.2311905)),
+    ])
+    
+    testset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="test", download=True, transform=transform_test) #, transform=transform_test
+
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    
+    return train_loader, valid_loader, test_loader
+
+
+
 """ for image in os.listdir(path):
         images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
         
