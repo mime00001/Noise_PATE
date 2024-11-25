@@ -125,6 +125,8 @@ if __name__ == '__main__':
     #plots.create_first_table()
     
     #help.print_SVHN_MNIST()
-    only_transfer_set("MNIST", "MIX", epsilon=20, BN_trick=True)
+    only_transfer_set("SVHN", "dead_leaves_SVHN", epsilon=20, BN_trick=True)
+    
+    only_transfer_set("SVHN", "Shaders21k_SVHN", epsilon=20, BN_trick=True)
     #workshop_plots.final_plot(num_reps=5)
     #workshop_plots.compare_KID_scores(2000)
