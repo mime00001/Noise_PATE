@@ -560,6 +560,8 @@ def get_dead_leaves_SVHN_PATE(batch_size):
     std = images.std()
     
     train_data = [(torch.FloatTensor((images[i]- mean)/std), torch.tensor(0)) for i in range(len(images))]
+    print(train_data[0].shape)
+    
     
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     

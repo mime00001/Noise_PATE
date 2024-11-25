@@ -131,7 +131,7 @@ if __name__ == '__main__':
     #workshop_plots.final_plot(num_reps=5)
     #workshop_plots.compare_KID_scores(2000)
     
-    help.run_parameter_search(path= "/vote_array/dead_leaves.npy", savepath="./pate_params_leaves")
-    help.run_parameter_search(path= "/vote_array/FractalDB.npy", savepath="./pate_params_FractalDB")
-    help.run_parameter_search(path= "/vote_array/StyleGAN.npy", savepath="./pate_params_StyleGAN")
-    help.run_parameter_search(path= "/vote_array/Shaders21k.npy", savepath="./pate_params_Shaders")
+    #help.run_parameter_search(path= "/vote_array/dead_leaves.npy", savepath="./pate_params_leaves")
+    #help.run_parameter_search(path= "/vote_array/FractalDB.npy", savepath="./pate_params_FractalDB")
+    #help.run_parameter_search(path= "/vote_array/stylegan.npy", savepath="./pate_params_StyleGAN")
+    #help.run_parameter_search(path= "/vote_array/Shaders21k.npy", savepath="./pate_params_Shaders")
