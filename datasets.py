@@ -465,8 +465,82 @@ def get_Shaders21k_PATE(batch_size):
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     
     return train_loader, train_loader, train_loader
+
+def get_MIX_PATE(batch_size):
+    num_workers = 4
+    
+    samples_per_dataset = 5000
+    
+    # Load some Gaussian noise
+    noise_path = LOG_DIR_DATA + "/noise_MNIST.npy"
+    noise_data = np.load(noise_path)
+    
+    noise_train_data = [(torch.FloatTensor(noise_data[i]).unsqueeze(0), torch.tensor(0)) for i in range(samples_per_dataset)]    
+    # Load some FMNIST
+    transform_train = transform=transforms.Compose([
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
+    ])
+
+    fmnist_trainset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train)
+    
+    fmnist_train_data = [(fmnist_trainset[i][0], torch.tensor(0)) for i in range(samples_per_dataset)]
+    
+    
+    # Load some dead leaves
+    leaves_path = LOG_DIR_DATA + "/dead_leaves-mixed.npy"
+    
+    leaves= np.load(leaves_path)
+    
+    mean = leaves.mean()
+    std = leaves.std()
+    
+    leaves_train_data = [(torch.FloatTensor((leaves[i]- mean)/std).unsqueeze(0), torch.tensor(0)) for i in range(samples_per_dataset)]
+    
+    # Load some StyleGAN
+    stylegan_path = LOG_DIR_DATA + "/stylegan-oriented.npy"
+    
+    stylegan = np.load(stylegan_path)
+    
+    mean = stylegan.mean()
+    std = stylegan.std()
+    
+    stylegan_train_data = [(torch.FloatTensor((stylegan[i]- mean)/std).unsqueeze(0), torch.tensor(0)) for i in range(samples_per_dataset)]
+    # Load some FractalDB
+    
+    fractaldb_path = LOG_DIR_DATA + "/FractalDB.npy"
+    
+    fractaldb = np.load(fractaldb_path)
+    
+    mean = fractaldb.mean()
+    std = fractaldb.std()
+    
+    fractaldb_train_data = [(torch.FloatTensor((fractaldb[i]- mean)/std).unsqueeze(0), torch.tensor(0)) for i in range(samples_per_dataset)]
+    
+    # Load some Shaders21k  
+    shaders_path = LOG_DIR_DATA + "/Shaders21k.npy"
+    
+    shaders = np.load(shaders_path)
+    
+    mean = shaders.mean()
+    std = shaders.std()
+    
+    shaders_train_data = [(torch.FloatTensor((shaders[i]- mean)/std).unsqueeze(0), torch.tensor(0)) for i in range(samples_per_dataset)]
+    
+    train_data = noise_train_data + fmnist_train_data + leaves_train_data + stylegan_train_data + fractaldb_train_data + shaders_train_data
+    
+    traindata_data = [data[0] for data in train_data]
+    np.save(LOG_DIR_DATA + "/MIX.npy", traindata_data)
+
+
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    
+    return train_loader, train_loader, train_loader
+    
+    
 #these datasets are for training the student, they need the teacher_labels saved in the folder /teacher_labels/ to work
 #
+
 
 def get_CIFAR10_student(batch_size, validation_size=0.2):
     num_workers = 4
@@ -909,7 +983,44 @@ def get_Shaders21k_student(batch_size, validation_size=0.2):
     
     return train_loader, valid_loader, test_loader
 
-
+def get_MIX_student(batch_size, validation_size=0.2):
+    num_workers = 4
+    path = LOG_DIR_DATA + "/MIX.npy"
+    target_path = LOG_DIR_DATA + "/teacher_labels/MIX.npy"
+    
+    targets = np.load(target_path)
+    
+    images = np.load(path)
+    
+    transform_test = transforms.Compose([
+         transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+    
+    testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    
+    trainset = [(torch.FloatTensor(images[i]), torch.tensor(targets[i])) for i in range(len(images)) if targets[i] != -1]
+    
+    print("Number of samples for student training: {}".format(len(trainset)))
+    
+    datasets = ["noise", "FMNIST", "leaves", "StyleGAN", "FractalDB", "Shaders"]
+    
+    
+    for i, dataset in enumerate(datasets):
+        current =targets[5000*i:5000*(i+1)]
+        num_answered = (current != -1).sum()
+        print(f"{dataset} had {num_answered} queries answered.")
+    
+    
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    
+    
+    return train_loader, valid_loader, test_loader
+    
+    
+    
 """ for image in os.listdir(path):
         images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
         
