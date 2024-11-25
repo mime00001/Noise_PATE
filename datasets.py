@@ -548,8 +548,8 @@ def get_dead_leaves_SVHN_PATE(batch_size):
         images.append(Image.open(path + image).resize((32, 32)))
         
     #need to be normalized before putting into network
-    images = np.array(images) 
-    
+    images = np.array(images)
+    print(len(images))    
     
     path = LOG_DIR_DATA + "/dead_leaves-mixed_SVHN.npy"
     np.save(path, images)
@@ -559,7 +559,7 @@ def get_dead_leaves_SVHN_PATE(batch_size):
     mean = images.mean()
     std = images.std()
     
-    train_data = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(0)) for i in range(len(images))]
+    train_data = [(torch.FloatTensor((images[i]- mean)/std), torch.tensor(0)) for i in range(len(images))]
     
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     
@@ -589,7 +589,7 @@ def get_Shaders21k_SVHN_PATE(batch_size):
     if len(images) < num_points:
         num_points = len(images)
     
-    train_data = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(0)) for i in range(num_points)]
+    train_data = [(torch.FloatTensor((images[i]- mean)/std), torch.tensor(0)) for i in range(num_points)]
     
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     
