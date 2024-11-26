@@ -125,16 +125,18 @@ if __name__ == '__main__':
     #plots.create_first_table()
     
     #help.print_SVHN_MNIST()
-    only_transfer_set("SVHN", "dead_leaves_SVHN", epsilon=20, BN_trick=True)
+    #only_transfer_set("SVHN", "Shaders21k_SVHN", epsilon=20, BN_trick=True)
     
     #only_transfer_set("SVHN", "Shaders21k_SVHN", epsilon=20, BN_trick=True)
-    #workshop_plots.final_plot(num_reps=5)
+    target_dataset = "SVHN"
+    query_datasets = ["SVHN", "Shaders21k_SVHN", "dead_leaves_SVHN", "stylegan_SVHN"]
+    workshop_plots.final_plot(num_reps=3, target_dataset=target_dataset, query_datasets=query_datasets)
     #workshop_plots.compare_KID_scores(2000)
     
-    #experiments.plot_count_histogram(title="consensus_leaves.png", votearray_path="/storage3/michel/data/vote_array/dead_leaves.npy")
-    #experiments.plot_count_histogram(title="consensus_FractalDB.png", votearray_path="/storage3/michel/data/vote_array/FractalDB.npy")
-    #experiments.plot_count_histogram(title="consensus_stylegan.png", votearray_path="/storage3/michel/data/vote_array/stylegan.npy")
-    #experiments.plot_count_histogram(title="consensus_Shaders21k.png", votearray_path="/storage3/michel/data/vote_array/Shaders21k.npy")
+    #experiments.plot_count_histogram(title="/plots/consensus_leaves.png", votearray_path="/storage3/michel/data/vote_array/dead_leaves.npy")
+    #experiments.plot_count_histogram(title="/plots/consensus_FractalDB.png", votearray_path="/storage3/michel/data/vote_array/FractalDB.npy")
+    #experiments.plot_count_histogram(title="/plots/consensus_stylegan.png", votearray_path="/storage3/michel/data/vote_array/stylegan.npy")
+    #experiments.plot_count_histogram(title="/plots/consensus_Shaders21k.png", votearray_path="/storage3/michel/data/vote_array/Shaders21k.npy")
     
     #help.run_parameter_search(path= "/vote_array/dead_leaves.npy", savepath="./pate_params_leaves")
     #help.run_parameter_search(path= "/vote_array/FractalDB.npy", savepath="./pate_params_FractalDB")

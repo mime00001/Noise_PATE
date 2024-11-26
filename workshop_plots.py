@@ -104,12 +104,12 @@ def compare_datasets_BN_trick():
     return None
 
 
-def final_plot(num_reps=3):
+def final_plot(num_reps=3, target_dataset ="MNIST", 
+            query_datasets = ["noise_MNIST", "dead_leaves", "FractalDB", "stylegan", "Shaders21k", "FMNIST", "MNIST"],
+            save_path="/results/OODness_dictionaries.pkl" ):
     np.set_printoptions(suppress=True)
 
     epsilon_range = [5, 8, 10, 20]
-    target_dataset = "MNIST"
-    query_datasets = ["noise_MNIST", "dead_leaves", "FractalDB", "stylegan", "Shaders21k", "FMNIST", "MNIST"]
     
     accuracies_wo_BN_trick = {}
     accuracies_with_BN_trick = {}
@@ -188,9 +188,11 @@ def final_plot(num_reps=3):
         
     for key, value in accuracies_with_BN_trick.items():
         print(f"CS: {key}: {value}")
+        
     
     
-    with open("OODness_dictionaries.pkl", "wb") as f:
+    
+    with open(save_path, "wb") as f:
         pickle.dump({"accuracies_wo": accuracies_wo_BN_trick, "accuracies_wo_std": accuracies_wo_BN_trick_std,
                      "accuracies_with": accuracies_with_BN_trick, "accuracies_with_std": accuracies_with_BN_trick_std,
                      "num_answered_wo": num_answered_wo, "num_answered_with": num_answered_with}, f)

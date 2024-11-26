@@ -1146,10 +1146,14 @@ def get_Shaders21k_SVHN_student(batch_size, validation_size=0.2):
     targets = np.load(target_path)
     
     images = np.load(path)
+    
+    num_points = 100000
+    if len(images) < num_points:
+        num_points = len(images)
 
     mean = images.mean()
     std = images.std()
-    trainset = [(torch.FloatTensor((images[i]- mean)/std).permute(2, 0, 1), torch.tensor(targets[i])) for i in range(len(images)) if targets[i] != -1]
+    trainset = [(torch.FloatTensor((images[i]- mean)/std).permute(2, 0, 1), torch.tensor(targets[i])) for i in range(num_points) if targets[i] != -1]
     
     print("Number of samples for student training: {}".format(len(trainset)))
     
