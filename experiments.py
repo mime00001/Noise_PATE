@@ -94,18 +94,19 @@ def plot_count_histogram(title="consensus_same_init_SVHN.png", votearray_path="/
     else:
         histogram_values = np.load(histogram_values_path)
     
+    datasetname = votearray_path.split("/")[-1].split(".npy")[0]
         
     plt.hist(histogram_values, bins=240, density=True)
     plt.ylim(0, 0.3)
     plt.xlim(20, 200) 
     plt.ylabel("Occurence")
     plt.xlabel("Number of teachers that agree on final label")
-    plt.title("Consensus of teachers")
-    plt.savefig(os.path.join(LOG_DIR, 'Plots', title), dpi=200)
+    plt.title(f"Consensus of teachers on {datasetname}")
+    plt.savefig(os.path.join(title), dpi=200)
     
     arr = np.array(histogram_values)
     save_path = title.replace(".png", "")
-    np.save(os.path.join(LOG_DIR, 'Plots', save_path), arr)
+    np.save(os.path.join(save_path), arr)
     
     
 def use_histogram():

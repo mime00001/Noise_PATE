@@ -103,7 +103,7 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
         else:
             params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
 
-    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick)
+    #noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick)
     noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format(transfer_dataset))
     noise_vote_array = noise_vote_array.T
     
@@ -128,17 +128,19 @@ if __name__ == '__main__':
     #only_transfer_set("SVHN", "Shaders21k_SVHN", epsilon=20, BN_trick=True)
     
     #only_transfer_set("SVHN", "Shaders21k_SVHN", epsilon=20, BN_trick=True)
-    target_dataset = "SVHN"
-    query_datasets = ["SVHN", "Shaders21k_SVHN", "dead_leaves_SVHN", "stylegan_SVHN"]
-    workshop_plots.final_plot(num_reps=3, target_dataset=target_dataset, query_datasets=query_datasets)
+    #target_dataset = "SVHN"
+    #query_datasets = ["SVHN", "Shaders21k_SVHN", "dead_leaves_SVHN", "stylegan_SVHN"]
+    #workshop_plots.final_plot(num_reps=3, target_dataset=target_dataset, query_datasets=query_datasets)
     #workshop_plots.compare_KID_scores(2000)
     
-    #experiments.plot_count_histogram(title="/plots/consensus_leaves.png", votearray_path="/storage3/michel/data/vote_array/dead_leaves.npy")
-    #experiments.plot_count_histogram(title="/plots/consensus_FractalDB.png", votearray_path="/storage3/michel/data/vote_array/FractalDB.npy")
-    #experiments.plot_count_histogram(title="/plots/consensus_stylegan.png", votearray_path="/storage3/michel/data/vote_array/stylegan.npy")
-    #experiments.plot_count_histogram(title="/plots/consensus_Shaders21k.png", votearray_path="/storage3/michel/data/vote_array/Shaders21k.npy")
+    #help.print_top_values(input_file="params/pate_params_FractalDB", column_name="num_correctly_answered", top_n_values=10, target_epsilon=10)
+    #params_fractal_and_leaves = {"threshold": 120, "sigma_threshold": 70, "sigma_gnmax": 30, "epsilon": epsilon, "delta" : 1e-5} (mix)
+    #params_stylegan = {'threshold': 150, 'sigma_threshold': 70, 'sigma_gnmax': 20, 'epsilon': 10, 'delta': 1e-05} (num correctly answered)
+    #params_shaders = {'threshold': 150, 'sigma_threshold': 100, 'sigma_gnmax': 40, 'epsilon': 10, 'delta': 1e-05} (num answered)
     
-    #help.run_parameter_search(path= "/vote_array/dead_leaves.npy", savepath="./pate_params_leaves")
-    #help.run_parameter_search(path= "/vote_array/FractalDB.npy", savepath="./pate_params_FractalDB")
-    #help.run_parameter_search(path= "/vote_array/stylegan.npy", savepath="./pate_params_StyleGAN")
-    #help.run_parameter_search(path= "/vote_array/Shaders21k.npy", savepath="./pate_params_Shaders")
+    epsilon = 10
+    params = {"threshold": 150, "sigma_threshold": 100, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
+    print(only_transfer_set("MNIST", "Shaders21k", params=params)[0])
+    params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
+    print(only_transfer_set("MNIST", "Shaders21k", params=params)[0])
+    
