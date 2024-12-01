@@ -69,7 +69,42 @@ def prep_MNIST_train(length=500):
 
 
 
+def prep_SVHN_test(length=500):
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.45207793, 0.45359373, 0.45602703), (0.22993235, 0.229334, 0.2311905)),
+    ])
+    testset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="test", download=True, transform=transform_test)
+    
+    testset = testset.data.permute(2, 0, 1)
+    
+    rgb_testset = []
+    for i in range(length):
+        image=testset[i]
+        
+        rgb_array = torch.tensor(image, dtype=torch.uint8)
+        rgb_testset.append(rgb_array)
+    rgb_testset = torch.stack(rgb_testset)
+    return rgb_testset
 
+def prep_SVHN_train(length=500):
+    transform_train = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.44921386, 0.4496643, 0.45029628), (0.20032172, 0.19916263, 0.19936596)),
+    ])
+    
+    trainset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="train", download=True, transform=transform_train)
+    
+    testset = testset.data.permute(2, 0, 1)
+    
+    rgb_testset = []
+    for i in range(length):
+        image=testset[i]
+        
+        rgb_array = torch.tensor(image, dtype=torch.uint8)
+        rgb_testset.append(rgb_array)
+    rgb_testset = torch.stack(rgb_testset)
+    return rgb_testset
 
 def prep_dataset(datasetname, length=500):
     path = LOG_DIR_DATA + "/{}.npy".format(datasetname)
@@ -85,6 +120,18 @@ def prep_dataset(datasetname, length=500):
     traindata = traindata.repeat(1, 3, 1, 1)
     
 
+    return traindata
+
+def prep_RGB_dataset(datasetname, length=500):
+    path = LOG_DIR_DATA + "/{}.npy".format(datasetname)
+    
+    data = np.load(path)
+    mean = data.mean()
+    std = data.std()
+
+    traindata = [torch.tensor(((data[i]-mean) / std).permute(2, 0, 1), dtype=torch.uint8) for i in range(length)]
+    
+    traindata = torch.stack(traindata)
     return traindata
 
 def prep_FMNIST(length=500):
@@ -103,11 +150,6 @@ def prep_FMNIST(length=500):
         rgb_testset.append(rgb_array)
     rgb_testset = torch.stack(rgb_testset)
     return rgb_testset
-
-
-
-
-
 
 
 def FID_MNIST():

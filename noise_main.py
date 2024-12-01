@@ -138,9 +138,13 @@ if __name__ == '__main__':
     #params_stylegan = {'threshold': 150, 'sigma_threshold': 70, 'sigma_gnmax': 20, 'epsilon': 10, 'delta': 1e-05} (num correctly answered)
     #params_shaders = {'threshold': 150, 'sigma_threshold': 100, 'sigma_gnmax': 40, 'epsilon': 10, 'delta': 1e-05} (num answered)
     
-    epsilon = 10
+    """ epsilon = 10
     params = {"threshold": 150, "sigma_threshold": 100, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
     print(only_transfer_set("MNIST", "Shaders21k", params=params)[0])
     params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
-    print(only_transfer_set("MNIST", "Shaders21k", params=params)[0])
+    print(only_transfer_set("MNIST", "Shaders21k", params=params)[0]) """
+    
+    workshop_plots.compare_FID_scores_SVHN(1000)
+    
+    workshop_plots.compare_KID_scores_SVHN(1000)
     

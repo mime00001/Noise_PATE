@@ -599,7 +599,7 @@ def get_Shaders21k_SVHN_PATE(batch_size):
     
 def get_stylegan_SVHN_PATE(batch_size):
     num_workers=4
-    path = LOG_DIR_DATA + "/stylegan-oriented/"
+    """ path = LOG_DIR_DATA + "/stylegan-oriented/"
     
     images=[]
     
@@ -610,7 +610,7 @@ def get_stylegan_SVHN_PATE(batch_size):
     images = np.array(images) 
     
     path = LOG_DIR_DATA + "/stylegan_SVHN.npy"
-    np.save(path, images)
+    np.save(path, images) """
     
     path = LOG_DIR_DATA + "/stylegan_SVHN.npy" 
      

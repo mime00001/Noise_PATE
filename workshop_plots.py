@@ -272,7 +272,29 @@ def compare_FID_scores(length=500):
     print(fid_scores)
     with open("fid_scores.pkl", "wb") as f:
         pickle.dump(fid_scores, f)
+
+def compare_FID_scores_SVHN(length=500):
+    
+    data_names = ["SVHN pub", "noise_SVHN", "dead_leaves-mixed_SVHN", "stylegan_SVHN", "Shaders21k_SVHN"]
+    
+    
+    base_data = compute_FID.prep_SVHN_train(length)
+    
+    fid_scores = {}
+    
+    for name in data_names:
+        if name == "SVHN pub":
+            compare_data = compute_FID.prep_SVHN_test(length)
+        else:
+            compare_data = compute_FID.prep_dataset(name, length)
+        fid_score = compute_FID.calculate_FID(base_data.to("cuda"), compare_data.to("cuda"))
+        fid_scores[name] = fid_score
         
+    print(fid_scores)
+    with open("/results/fid_scores_SVHN.pkl", "wb") as f:
+        pickle.dump(fid_scores, f)
+
+   
 def compare_KID_scores(length=500):
     
     data_names = ["MNIST pub", "noise_MNIST", "FMNIST", "dead_leaves-mixed", "stylegan-oriented", "FractalDB", "Shaders21k"]
@@ -293,5 +315,28 @@ def compare_KID_scores(length=500):
         kid_scores[name] = kid_score
         
     print(kid_scores)
-    with open("fid_scores.pkl", "wb") as f:
+    with open("kid_scores.pkl", "wb") as f:
+        pickle.dump(kid_scores, f)
+        
+def compare_KID_scores_SVHN(length=500):
+    
+    data_names = ["SVHN pub", "noise_SVHN", "dead_leaves-mixed_SVHN", "stylegan_SVHN", "Shaders21k_SVHN"]
+    
+    
+    base_data = compute_FID.prep_SVHN_train(length)
+    
+    kid_scores = {}
+    
+    for name in data_names:
+        if name == "FMNIST":
+            compare_data = compute_FID.prep_FMNIST(length)
+        elif name == "MNIST pub":
+            compare_data = compute_FID.prep_SVHN_test(length)
+        else:
+            compare_data = compute_FID.prep_dataset(name, length)
+        kid_score = compute_FID.calculate_KID(base_data.to("cuda"), compare_data.to("cuda"))
+        kid_scores[name] = kid_score
+        
+    print(kid_scores)
+    with open("kid_scores_SVHN.pkl", "wb") as f:
         pickle.dump(kid_scores, f)
