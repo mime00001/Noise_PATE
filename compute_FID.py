@@ -95,11 +95,11 @@ def prep_SVHN_train(length=500):
     
     trainset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="train", download=True, transform=transform_train)
     
-    testset = testset.data.permute(2, 0, 1)
+    trainset = trainset.data.permute(2, 0, 1)
     
     rgb_testset = []
     for i in range(length):
-        image=testset[i]
+        image=trainset[i]
         
         rgb_array = torch.tensor(image, dtype=torch.uint8)
         rgb_testset.append(rgb_array)
