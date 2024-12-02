@@ -76,13 +76,13 @@ def prep_SVHN_test(length=500):
     ])
     testset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="test", download=True, transform=transform_test)
     
-    testset = testset.data.permute(2, 0, 1)
+    testset = testset.data
     
     rgb_testset = []
     for i in range(length):
         image=testset[i]
         
-        rgb_array = torch.tensor(image, dtype=torch.uint8)
+        rgb_array = torch.tensor(image, dtype=torch.uint8).permute(2, 0, 1)
         rgb_testset.append(rgb_array)
     rgb_testset = torch.stack(rgb_testset)
     return rgb_testset
@@ -95,13 +95,13 @@ def prep_SVHN_train(length=500):
     
     trainset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="train", download=True, transform=transform_train)
     
-    trainset = trainset.data.permute(2, 0, 1)
+    trainset = trainset.data
     
     rgb_testset = []
     for i in range(length):
         image=trainset[i]
         
-        rgb_array = torch.tensor(image, dtype=torch.uint8)
+        rgb_array = torch.tensor(image, dtype=torch.uint8).permute(2, 0, 1)
         rgb_testset.append(rgb_array)
     rgb_testset = torch.stack(rgb_testset)
     return rgb_testset
