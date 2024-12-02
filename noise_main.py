@@ -129,8 +129,8 @@ if __name__ == '__main__':
     
     #only_transfer_set("SVHN", "Shaders21k_SVHN", epsilon=20, BN_trick=True)
     #target_dataset = "SVHN"
-    #query_datasets = ["SVHN", "Shaders21k_SVHN", "dead_leaves_SVHN", "stylegan_SVHN"]
-    #workshop_plots.final_plot(num_reps=3, target_dataset=target_dataset, query_datasets=query_datasets)
+    query_datasets = ["SVHN","noise_SVHN", "Shaders21k_SVHN", "dead_leaves_SVHN", "stylegan_SVHN"]
+    workshop_plots.final_plot(num_reps=3, target_dataset="SVHN", query_datasets=query_datasets)
     #workshop_plots.compare_KID_scores(2000)
     
     #help.print_top_values(input_file="params/pate_params_FractalDB", column_name="num_correctly_answered", top_n_values=10, target_epsilon=10)
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
     print(only_transfer_set("MNIST", "Shaders21k", params=params)[0]) """
     
-    workshop_plots.compare_FID_scores_SVHN(1000)
+    #workshop_plots.compare_FID_scores_SVHN(500)
     
-    workshop_plots.compare_KID_scores_SVHN(1000)
+    #workshop_plots.compare_KID_scores_SVHN(500)
     

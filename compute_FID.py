@@ -82,7 +82,7 @@ def prep_SVHN_test(length=500):
     for i in range(length):
         image=testset[i]
         
-        rgb_array = torch.tensor(image, dtype=torch.uint8).permute(2, 0, 1)
+        rgb_array = torch.tensor(image, dtype=torch.uint8) #.permute(2, 0, 1)
         rgb_testset.append(rgb_array)
     rgb_testset = torch.stack(rgb_testset)
     return rgb_testset
@@ -101,7 +101,7 @@ def prep_SVHN_train(length=500):
     for i in range(length):
         image=trainset[i]
         
-        rgb_array = torch.tensor(image, dtype=torch.uint8).permute(2, 0, 1)
+        rgb_array = torch.tensor(image, dtype=torch.uint8) #.permute(2, 0, 1)
         rgb_testset.append(rgb_array)
     rgb_testset = torch.stack(rgb_testset)
     return rgb_testset
@@ -128,8 +128,10 @@ def prep_RGB_dataset(datasetname, length=500):
     data = np.load(path)
     mean = data.mean()
     std = data.std()
-
-    traindata = [torch.tensor(((data[i]-mean) / std).permute(2, 0, 1), dtype=torch.uint8) for i in range(length)]
+    if datasetname != "noise_SVHN":
+        traindata = [torch.tensor(((data[i]-mean) / std), dtype=torch.uint8).permute(2, 0, 1) for i in range(length)] #
+    else: 
+        traindata = [torch.tensor(((data[i]-mean) / std), dtype=torch.uint8) for i in range(length)] #
     
     traindata = torch.stack(traindata)
     return traindata
