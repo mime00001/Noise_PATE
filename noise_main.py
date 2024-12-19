@@ -148,5 +148,8 @@ if __name__ == '__main__':
     
     #workshop_plots.compare_KID_scores_SVHN(500)
     
-    full_run("FMNIST", "MNIST", 200, train_teachers=True)
+    query_datasets = ["noise_FMNIST","FMNIST", "MNIST_FMNIST", "dead_leaves_FMNIST", "FractalDB_FMNIST", "stylegan_FMNIST", "Shaders21k_FMNIST"]
+    workshop_plots.final_plot(num_reps=1, target_dataset="FMNIST", query_datasets=query_datasets, save_path="results/OODness_FMNIST.pkl")
+    
+    #full_run("FMNIST", "MNIST", 200, train_teachers=True)
     

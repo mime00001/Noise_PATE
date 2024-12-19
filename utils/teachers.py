@@ -66,7 +66,7 @@ def train_teacher(teacher_nw, teacher_id, nb_teachers, train_loader, valid_loade
     metrics = []
     for epoch in range(1, n_epochs+1):
         args = train_one_epoch(teacher_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device)
-        if verbose:
+        if verbose and (epoch % 20) == 0:
             print("Epoch: {} \tTraining Loss: {:.4f} \tTraining Accuracy: {:.4f} \tValidation Loss: {:.4f} \tValidation Accuracy: {:.4f}".format(epoch, *args))
         metrics.append(args)
         

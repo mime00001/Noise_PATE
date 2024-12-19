@@ -106,7 +106,7 @@ def compare_datasets_BN_trick():
 
 def final_plot(num_reps=3, target_dataset ="MNIST", 
             query_datasets = ["noise_MNIST", "dead_leaves", "FractalDB", "stylegan", "Shaders21k", "FMNIST", "MNIST"],
-            save_path="/results/OODness_dictionaries.pkl" ):
+            save_path="results/OODness_dictionaries.pkl" ):
     np.set_printoptions(suppress=True)
 
     epsilon_range = [5, 8, 10, 20]
@@ -261,7 +261,7 @@ def compare_FID_scores(length=500):
     
     for name in data_names:
         if name == "FMNIST":
-            compare_data = compute_FID.prep_FMNIST(length)
+            compare_data = compute_FID.prep_FMNIST_test(length)
         elif name == "MNIST pub":
             compare_data = compute_FID.prep_MNIST_test(length)
         else:
@@ -307,7 +307,7 @@ def compare_KID_scores(length=500):
     
     for name in data_names:
         if name == "FMNIST":
-            compare_data = compute_FID.prep_FMNIST(length)
+            compare_data = compute_FID.prep_FMNIST_test(length)
         elif name == "MNIST pub":
             compare_data = compute_FID.prep_MNIST_test(length)
         else:
@@ -339,4 +339,48 @@ def compare_KID_scores_SVHN(length=500):
         
     print(kid_scores)
     with open("results/kid_scores_SVHN.pkl", "wb") as f:
+        pickle.dump(kid_scores, f)
+        
+def compare_FID_scores_FMNIST(length=500):
+    data_names = ["FMNIST pub", "noise_MNIST", "MNIST", "dead_leaves-mixed", "stylegan-oriented", "FractalDB", "Shaders21k"]
+    
+    
+    base_data = compute_FID.prep_FMNIST_train(length)
+    
+    fid_scores = {}
+    
+    for name in data_names:
+        if name == "FMNIST pub":
+            compare_data = compute_FID.prep_FMNIST_test(length)
+        elif name == "MNIST":
+            compare_data = compute_FID.prep_MNIST_train(length)
+        else:
+            compare_data = compute_FID.prep_dataset(name, length)
+        fid_score = compute_FID.calculate_FID(base_data.to("cuda"), compare_data.to("cuda"))
+        fid_scores[name] = fid_score
+        
+    print(fid_scores)
+    with open("results/fid_scores_FMNIST.pkl", "wb") as f:
+        pickle.dump(fid_scores, f)
+        
+def compare_KID_scores_FMNIST(length=500):
+    
+    data_names = ["FMNIST pub", "noise_MNIST", "MNIST", "dead_leaves-mixed", "stylegan-oriented", "FractalDB", "Shaders21k"]
+    
+    base_data = compute_FID.prep_FMNIST_train(length)
+    
+    kid_scores = {}
+    
+    for name in data_names:
+        if name == "FMNIST pub":
+            compare_data = compute_FID.prep_FMNIST_test(length)
+        elif name == "MNIST":
+            compare_data = compute_FID.prep_MNIST_train(length)
+        else:
+            compare_data = compute_FID.prep_dataset(name, length)
+        kid_score = compute_FID.calculate_KID(base_data.to("cuda"), compare_data.to("cuda"))
+        kid_scores[name] = kid_score
+        
+    print(kid_scores)
+    with open("results/kid_scores_FMNIST.pkl", "wb") as f:
         pickle.dump(kid_scores, f)

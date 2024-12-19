@@ -136,7 +136,7 @@ def prep_RGB_dataset(datasetname, length=500):
     traindata = torch.stack(traindata)
     return traindata
 
-def prep_FMNIST(length=500):
+def prep_FMNIST_test(length=500):
     transform_test = transforms.Compose([
             transforms.ToTensor(), # first, convert image to PyTorch tensor
             transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
@@ -153,6 +153,23 @@ def prep_FMNIST(length=500):
     rgb_testset = torch.stack(rgb_testset)
     return rgb_testset
 
+def prep_FMNIST_train(length=500):
+    transform_train=transforms.Compose([
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
+    ])
+
+    trainset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train)
+    rgb_testset = []
+    trainset = trainset.data.unsqueeze(1)
+    trainset = trainset.repeat(1, 3, 1, 1)
+    for i in range(length):
+        image=trainset[i]
+        
+        rgb_array = torch.tensor(image, dtype=torch.uint8)
+        rgb_testset.append(rgb_array)
+    rgb_testset = torch.stack(rgb_testset)
+    return rgb_testset
 
 def FID_MNIST():
     transform_train = transform=transforms.Compose([
