@@ -15,11 +15,11 @@ def resolve_dataset(dataset_name):
     }
     if dataset_name=='CIFAR10':
         experiment_config['code_dim'] = 10
-        experiment_config['model_teacher'] = "resnet12"
-        experiment_config['model_student'] = "resnet12"
+        experiment_config['model_teacher'] = "resnet18"
+        experiment_config['model_student'] = "resnet18"
         experiment_config['inputs'] = 3
         experiment_config['channels'] = 3
-        experiment_config['batch_size'] = 64
+        experiment_config['batch_size'] = 128
         experiment_config['BN_trick'] = True
     elif dataset_name=="MNIST":
         experiment_config['code_dim'] = 10

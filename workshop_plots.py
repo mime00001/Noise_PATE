@@ -106,8 +106,9 @@ def compare_datasets_BN_trick():
 
 def final_plot(num_reps=3, target_dataset ="MNIST", 
             query_datasets = ["noise_MNIST", "dead_leaves", "FractalDB", "stylegan", "Shaders21k", "FMNIST", "MNIST"],
-            save_path="results/OODness_dictionaries.pkl" ):
+            save_path="results/OODness_dictionaries_with_SSL.pkl", nb_teachers=300, student_ssl=True, teacher_ssl=True):
     np.set_printoptions(suppress=True)
+
 
     epsilon_range = [5, 8, 10, 20]
     
@@ -131,44 +132,48 @@ def final_plot(num_reps=3, target_dataset ="MNIST",
     #then train the student on the data labeled without BN_trick
        
     for ds in query_datasets:
-        vote_array = pate_data.query_teachers(target_dataset, ds, 200, False)
+        vote_array = pate_data.query_teachers(target_dataset, ds, nb_teachers, False, SSL=teacher_ssl)
         vote_array = vote_array.T
         
         for i in range(num_reps):
             
             for i, eps in enumerate(epsilon_range): 
-                params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
-                if ds=="FMNIST":
-                    params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
+                params = {"threshold": 200, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
+                #if ds=="FMNIST":
+                #    params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
                     
                 
                 label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
                 
                 achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
                 num_answered = (pate_labels != -1).sum()
-                final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds, n_epochs=50)
-                
+                if student_ssl:
+                    final_acc = student.util_train_SSL_student(target_dataset=target_dataset, transfer_dataset=ds, backbone_name="stylegan" ,n_epochs=50)
+                else:
+                    final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds ,n_epochs=50)
                 accuracies_wo_BN_trick[ds][i].append(final_acc)
                 num_answered_wo[ds][i].append(num_answered)
     
     
     for ds in query_datasets:
-        vote_array = pate_data.query_teachers(target_dataset, ds, 200, True)
+        vote_array = pate_data.query_teachers(target_dataset, ds, nb_teachers, True, SSL=teacher_ssl)
         vote_array = vote_array.T
         
         for i in range(num_reps):
             
             for i, eps in enumerate(epsilon_range): 
-                params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
-                if ds=="FMNIST":
-                    params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
+                params = {"threshold": 200, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
+                #if ds=="FMNIST":
+                #    params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
                     
                 label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
                 
                 achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
                 num_answered = (pate_labels != -1).sum()
-                final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds, n_epochs=50)
-                
+                if student_ssl:
+                    final_acc = student.util_train_SSL_student(target_dataset=target_dataset, transfer_dataset=ds, backbone_name="stylegan" ,n_epochs=50)
+                else:
+                    final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds ,n_epochs=50) 
                 accuracies_with_BN_trick[ds][i].append(final_acc)
                 num_answered_with[ds][i].append(num_answered)
                 
@@ -197,6 +202,104 @@ def final_plot(num_reps=3, target_dataset ="MNIST",
                      "accuracies_with": accuracies_with_BN_trick, "accuracies_with_std": accuracies_with_BN_trick_std,
                      "num_answered_wo": num_answered_wo, "num_answered_with": num_answered_with}, f)
     
+    
+
+def final_plot_CIFAR(num_reps=3, target_dataset ="CIFAR10", 
+            query_datasets = ["noise_CIFAR10", "dead_leaves_CIFAR10", "stylegan_CIFAR10", "Shaders21k_CIFAR10", "CIFAR10"],
+            save_path="results/OODness_dictionaries_with_SSL_CIFAR10.pkl", nb_teachers=100 ):
+    np.set_printoptions(suppress=True)
+
+    epsilon_range = [5,10, 20]
+    
+    accuracies_wo_BN_trick = {}
+    accuracies_with_BN_trick = {}
+    accuracies_wo_BN_trick_std = {}
+    accuracies_with_BN_trick_std = {}
+    num_answered_wo = {}
+    num_answered_with ={}
+    
+    for ds in query_datasets:
+        accuracies_wo_BN_trick[ds] = [[] for e in epsilon_range]
+        accuracies_with_BN_trick[ds] = [[] for e in epsilon_range]
+        accuracies_wo_BN_trick_std[ds] = [[] for e in epsilon_range]
+        accuracies_with_BN_trick_std[ds] = [[] for e in epsilon_range]
+        num_answered_wo[ds] = [[] for e in epsilon_range]
+        num_answered_with[ds] = [[] for e in epsilon_range]
+    
+    
+    #pate_data.create_Gaussian_noise(target_dataset, 60000)   
+    #then train the student on the data labeled without BN_trick
+       
+    for ds in query_datasets:
+        vote_array = pate_data.query_teachers(target_dataset, ds, nb_teachers, False, SSL=True)
+        vote_array = vote_array.T
+        
+        for i in range(num_reps):
+            
+            for i, eps in enumerate(epsilon_range): 
+                params = {"threshold": 80, "sigma_threshold": 50, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
+                #if ds=="FMNIST":
+                #    params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
+                    
+                
+                label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
+                
+                achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
+                num_answered = (pate_labels != -1).sum()
+                final_acc = student.util_train_SSL_student(target_dataset=target_dataset, transfer_dataset=ds, backbone_name="shaders21k_rgb" ,n_epochs=50)
+                
+                accuracies_wo_BN_trick[ds][i].append(final_acc)
+                num_answered_wo[ds][i].append(num_answered)
+    
+    
+    for ds in query_datasets:
+        vote_array = pate_data.query_teachers(target_dataset, ds, nb_teachers, True, SSL=True)
+        vote_array = vote_array.T
+        
+        for i in range(num_reps):
+            
+            for i, eps in enumerate(epsilon_range): 
+                params = {"threshold": 80, "sigma_threshold": 50, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
+                #if ds=="FMNIST":
+                #    params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
+                    
+                label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
+                
+                achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
+                num_answered = (pate_labels != -1).sum()
+                final_acc = student.util_train_SSL_student(target_dataset=target_dataset, transfer_dataset=ds, backbone_name="shaders21k_rgb" ,n_epochs=50)
+                
+                accuracies_with_BN_trick[ds][i].append(final_acc)
+                print(f"Num answered: {num_answered_with}")
+                if num_answered_with:
+                    num_answered_with[ds][i].append(num_answered)
+                else:
+                    print(f"Num answered was None!")
+                    num_answered_with[ds][i].append(0)
+    
+    for ds in query_datasets:
+        for i, eps in enumerate(epsilon_range):
+            accuracies_with_BN_trick_std[ds][i] = np.std(accuracies_with_BN_trick[ds][i])
+            accuracies_with_BN_trick[ds][i] = np.mean(accuracies_with_BN_trick[ds][i])
+            accuracies_wo_BN_trick_std[ds][i] = np.std(accuracies_wo_BN_trick[ds][i])
+            accuracies_wo_BN_trick[ds][i] = np.mean(accuracies_wo_BN_trick[ds][i])
+            num_answered_wo[ds][i] = np.mean(num_answered_wo[ds][i])
+            num_answered_with[ds][i] = np.mean(num_answered_with[ds][i])
+    
+    #display them in the table as well
+    for key, value in accuracies_wo_BN_trick.items():
+        print(f"RS: {key}: {value}")
+        
+    for key, value in accuracies_with_BN_trick.items():
+        print(f"CS: {key}: {value}")
+        
+    
+    
+    
+    with open(save_path, "wb") as f:
+        pickle.dump({"accuracies_wo": accuracies_wo_BN_trick, "accuracies_wo_std": accuracies_wo_BN_trick_std,
+                     "accuracies_with": accuracies_with_BN_trick, "accuracies_with_std": accuracies_with_BN_trick_std,
+                     "num_answered_wo": num_answered_wo, "num_answered_with": num_answered_with}, f)
     
     
     

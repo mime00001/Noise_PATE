@@ -33,7 +33,7 @@ LOG_DIR = "/storage3/michel"
 LOG_DIR_MODEL = "/storage3/michel"
 
 
-def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200, params=None, train_teachers=False, compare=True, epsilon=10):
+def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", backbone_name=None, nb_teachers=200, params=None, SSL_teachers=True, train_teachers=False, compare=True, epsilon=10):
     
     
     #params = {"threshold": 150, "sigma_threshold": 50, "sigma_gnmax": 20, "epsilon": 26, "delta" : 1e-5}
@@ -48,7 +48,10 @@ def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200,
     
     #first train teachers on dataset
     if train_teachers:
-        teachers.util_train_teachers_same_init(dataset_name=target_dataset, n_epochs=75, nb_teachers=nb_teachers, initialize=True) #need to change back to True
+        if SSL_teachers:
+            teachers.util_train_teachers_SSL_pretrained(dataset_name=target_dataset, backbone_name=backbone_name, n_epochs=50, nb_teachers=nb_teachers)
+        else:
+            teachers.util_train_teachers_same_init(dataset_name=target_dataset, n_epochs=50, nb_teachers=nb_teachers, initialize=True) #need to change back to True
     
     if compare:
         #then query teachers for student labels
@@ -89,15 +92,15 @@ def full_run(target_dataset="MNIST", transfer_dataset="FMNIST", nb_teachers=200,
         print(f"Accuracy with transfer dataset: {transfer_acc}")
 
 
-def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb_teachers=200, params=None, epsilon=20, BN_trick=True):
+def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb_teachers=200, params=None, epsilon=20, BN_trick=True, backbone_name=None):
     
     if not params:
         #if transfer_dataset=="FMNIST":
          #   params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": epsilon, "delta" : 1e-5}
         if target_dataset =="MNIST": 
-            params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
+            params = {"threshold": 200, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset =="CIFAR10": 
-            params = {"threshold": 100, "sigma_threshold": 30, "sigma_gnmax": 10, "epsilon": epsilon, "delta" : 1e-5}
+            params = {"threshold": 80, "sigma_threshold": 50, "sigma_gnmax": 20, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset=="SVHN":
             params = {"threshold": 150, "sigma_threshold": 100, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-6}
         else:
@@ -114,42 +117,41 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
     print(len(noise_votes))
     
     #then train the student on Gaussian noise    
-    finalacc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=30, lr=0.001, optimizer="Adam", kwargs=params)
+    if backbone_name:
+        finalacc = student.util_train_SSL_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset,backbone_name=backbone_name, n_epochs=30, lr=0.001, optimizer="Adam", kwargs=params)
+    else:
+        finalacc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=30, lr=0.001, optimizer="Adam", kwargs=params)
     return finalacc, num_answered
     
 
 
 
 if __name__ == '__main__':
-    #full_run("MNIST", "noise_MNIST", 200, train_teachers=True, epsilon=10, compare=True)
-    #plots.create_first_table()
+    #backbone names ["dead_leaves", "stylegan", "shaders21k_grey", "shaders21k_rgb"]
     
-    #help.print_SVHN_MNIST()
-    #only_transfer_set("SVHN", "Shaders21k_SVHN", epsilon=20, BN_trick=True)
+    #full_run(target_dataset="CIFAR10", transfer_dataset="noise_CIFAR10", nb_teachers=50, backbone_name="shaders21k_rgb", SSL_teachers=True, train_teachers=True, epsilon=10, compare=True)
     
-    #only_transfer_set("SVHN", "Shaders21k_SVHN", epsilon=20, BN_trick=True)
-    #target_dataset = "SVHN"
-    #query_datasets = ["SVHN","noise_SVHN", "Shaders21k_SVHN", "dead_leaves_SVHN", "stylegan_SVHN"]
-    #workshop_plots.final_plot(num_reps=3, target_dataset="SVHN", query_datasets=query_datasets)
-    #workshop_plots.compare_KID_scores(2000)
+    #full_run(target_dataset="CIFAR10", transfer_dataset="noise_CIFAR10", nb_teachers=50, SSL_teachers=False, train_teachers=True, epsilon=10, compare=True)
     
-    #help.print_top_values(input_file="params/pate_params_FractalDB", column_name="num_correctly_answered", top_n_values=10, target_epsilon=10)
-    #params_fractal_and_leaves = {"threshold": 120, "sigma_threshold": 70, "sigma_gnmax": 30, "epsilon": epsilon, "delta" : 1e-5} (mix)
-    #params_stylegan = {'threshold': 150, 'sigma_threshold': 70, 'sigma_gnmax': 20, 'epsilon': 10, 'delta': 1e-05} (num correctly answered)
-    #params_shaders = {'threshold': 150, 'sigma_threshold': 100, 'sigma_gnmax': 40, 'epsilon': 10, 'delta': 1e-05} (num answered)
+    #only_transfer_set("CIFAR10", "noise_CIFAR10", 50, epsilon=10)
     
-    """ epsilon = 10
-    params = {"threshold": 150, "sigma_threshold": 100, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
-    print(only_transfer_set("MNIST", "Shaders21k", params=params)[0])
-    params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
-    print(only_transfer_set("MNIST", "Shaders21k", params=params)[0]) """
+    target_dataset="CIFAR10"
+    backbone_name="shaders21k_rgb"
+    nb_teachers=100
+    #teachers.util_train_teachers_SSL_pretrained(dataset_name=target_dataset, n_epochs=50, backbone_name=backbone_name,  nb_teachers=nb_teachers)
+
+    #pate_data.query_teachers(target_dataset, "CIFAR10", nb_teachers)
     
-    #workshop_plots.compare_FID_scores_SVHN(500)
+    #help.run_parameter_search("/vote_array/Shaders21k_CIFAR10.npy", "/home/michel/project/Noise_PATE/params/100_Shaders21k_CIFAR10.csv")
+
+    #teachers.util_train_teachers_same_init(dataset_name=target_dataset, n_epochs=50, nb_teachers=nb_teachers, initialize=True) #need to change back to True
+
+    #help.print_top_values("params/100_Shaders21k_CIFAR10.csv", "num_correctly_answered", 20, 10)
+    #workshop_plots.final_plot_CIFAR(num_reps=3)
+    workshop_plots.final_plot(num_reps=3, save_path="results/teachers_not_student_SSL", student_ssl=True, teacher_ssl=False, nb_teachers=200)
+    #experiments.plot_count_histogram("plots/consensus_SSL_noise_MNIST.png", "/storage3/michel/data/vote_array/noise_MNIST.npy", ylim=0.3)
     
-    #workshop_plots.compare_KID_scores_SVHN(500)
+    #only_transfer_set("CIFAR10", "noise_CIFAR10", 100, epsilon=10, backbone_name="shaders21k_rgb")
     
-    query_datasets = ["noise_FMNIST","FMNIST", "MNIST_FMNIST", "dead_leaves_FMNIST", "FractalDB_FMNIST", "stylegan_FMNIST", "Shaders21k_FMNIST"]
-    workshop_plots.final_plot(num_reps=1, target_dataset="FMNIST", query_datasets=query_datasets, save_path="results/OODness_FMNIST.pkl")
-    
-    #full_run("FMNIST", "MNIST", 200, train_teachers=True)
-    
+    #150 120 40 or 200 120 60
+    # CIFAR 70 50 30 or 80 50 20

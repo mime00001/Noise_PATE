@@ -99,7 +99,6 @@ def get_MNIST(batch_size, teacher_id, nb_teachers, valid_size=0.2):
     trainset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
     testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test) #, transform=transform_test
     batch_len = int(len(trainset) / nb_teachers)
-    assert batch_len >= batch_size, "batchsize  too large for number of teachers, each teacher has less than batchsize samples"
     
     start = teacher_id * batch_len
     end = (teacher_id+1) * batch_len

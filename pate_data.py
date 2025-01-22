@@ -14,13 +14,18 @@ LOG_DIR = "/storage3/michel"
 LOG_DIR_MODEL = "/storage3/michel"
 #this file performs the data processing
 
-def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int, BN_trick=True):
+def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int, BN_trick=True, SSL=True):
     """queries the teacher ensemble for labels about a specific dataset
 
     Args:
         dataset_name (str): Name of dataset
         nb_teachers (int): Number of teachers
     """
+    if SSL:
+        prefix=""
+    else:
+        prefix="SL_"
+    
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(target_dataset)
     labels = [[] for i in range(nb_teachers)]
@@ -33,7 +38,7 @@ def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int, 
         print("querying teacher {}".format(i))
         teacher_name = conventions.resolve_teacher_name(experiment_config)
         teacher_name += "_{}".format(i)
-        LOG_DIR = '/storage3/michel/Pretrained_NW'
+        LOG_DIR = f'/storage3/michel/{prefix}Pretrained_NW'
         
         if "noise_" in target_dataset:
             target_dataset = target_dataset.replace("noise_", "")
@@ -58,6 +63,7 @@ def query_teachers(target_dataset : str, query_dataset :str, nb_teachers : int, 
                 labels[i].append(j)
     path = LOG_DIR_DATA + "/vote_array/{}".format(query_dataset)
     labels = np.array(labels)
+    print(f"Saving votes at {path}.")
     np.save(path, labels, allow_pickle=True)
     
     return labels

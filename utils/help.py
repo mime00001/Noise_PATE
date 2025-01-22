@@ -68,16 +68,16 @@ def print_top_values(input_file, column_name, top_n_values, target_epsilon=3):
 
 
 def run_parameter_search(path="/vote_array/noise_SVHN.npy", savepath="./pate_params", predicted_labels=None):
-    
+    #"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5
     noise_vote_array_path = LOG_DIR_DATA +  path
     
     noise_vote_array = np.load(noise_vote_array_path)
     noise_vote_array=noise_vote_array.T
     
-    threshold_list = [70, 100, 120, 150] #
-    sigma_threshold_list = [70, 100, 120] # 
-    sigma_gnmax_list = [20, 30, 40]
-    epsilon_list = [5, 10, 20]
+    threshold_list =  [50, 70, 80]#[150, 200, 220, 250]
+    sigma_threshold_list =  [35, 50, 60]# [120, 150, 180]
+    sigma_gnmax_list = [20, 30, 40]#[40, 60]
+    epsilon_list = [10, 20]
     delta_list =[1e-5]
     num_classes=10
     
