@@ -36,12 +36,6 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
         train_loss += loss.item()
     train_acc = np.mean(accs)
     
-    if test_loader:
-        for data, target in test_loader:
-            data, target = data.to(device), target.to(device)
-            with torch.no_grad():
-                output = target_nw(data)   
-    
     valid_loss = 0.0
     accs = []
     for data, target in valid_loader:
@@ -118,7 +112,7 @@ def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weig
         experiment_config["inputs"],
         experiment_config["code_dim"]
     )).to(device)
-    metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=test_loader, loss=loss, label=label)
+    metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=None, loss=loss, label=label)
     
     ret = metrics[3][-1]
     
@@ -162,6 +156,8 @@ def util_train_SSL_student(target_dataset, transfer_dataset, backbone_name, n_ep
         transfer_dataset,
         experiment_config["batch_size"]
     ))
+    
+    print(f"Transferring with: {transfer_dataset}")
     
     _, test_loader, target_loader = eval("datasets.get_{}_student({})".format(
         target_dataset,
@@ -211,14 +207,13 @@ def util_train_SSL_student(target_dataset, transfer_dataset, backbone_name, n_ep
 
         log = model.load_state_dict(state_dict, strict=False)
         assert log.missing_keys == ['fc.weight', 'fc.bias']
-        for name, param in model.named_parameters():
-            if name not in ['fc.weight', 'fc.bias']:
-                param.requires_grad = False
+        if target_dataset != "SVHN": #only freeze if not svhn
+                for name, param in model.named_parameters():
+                        if name not in ['fc.weight', 'fc.bias']:
+                            param.requires_grad = False
 
-        parameters = list(filter(lambda p: p.requires_grad, model.parameters()))
-        assert len(parameters) == 2  # fc.weight, fc.bias
     student_model = model.to(device)
-    metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=test_loader, loss=loss, label=label)
+    metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=None, loss=loss, label=label)
     
     ret = metrics[3][-1]
     

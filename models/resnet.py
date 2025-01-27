@@ -106,7 +106,12 @@ def ResNet12(*args):
 def ResNet18(*args):
     return ResNet(BasicBlock, [2, 2, 2, 2])
 
-
+def ResNet18_MNIST(*args):
+    model = ResNet(BasicBlock, [2, 2, 2, 2])
+    model.conv1 = nn.Conv2d(1, 64, kernel_size=3,
+                        stride=1, padding=1, bias=False)
+    return model
+    
 def ResNet34(*args):
     return ResNet(BasicBlock, [3, 4, 6, 3])
 

@@ -23,16 +23,24 @@ def resolve_dataset(dataset_name):
         experiment_config['BN_trick'] = True
     elif dataset_name=="MNIST":
         experiment_config['code_dim'] = 10
-        experiment_config['model_teacher'] = "mnistresnet"
-        experiment_config['model_student'] = "mnistresnet"
+        experiment_config['model_teacher'] = "resnet18_mnist"
+        experiment_config['model_student'] = "resnet18_mnist"
+        experiment_config['inputs'] = 1
+        experiment_config['channels'] = 1
+        experiment_config['batch_size'] = 256
+        experiment_config['BN_trick'] = True
+    elif dataset_name=="TissueMNIST":
+        experiment_config['code_dim'] = 8
+        experiment_config['model_teacher'] = "resnet18_mnist"
+        experiment_config['model_student'] = "resnet18_mnist"
         experiment_config['inputs'] = 1
         experiment_config['channels'] = 1
         experiment_config['batch_size'] = 256
         experiment_config['BN_trick'] = True
     elif dataset_name=="FMNIST":
         experiment_config['code_dim'] = 10
-        experiment_config['model_teacher'] = "mnistresnet"
-        experiment_config['model_student'] = "mnistresnet"
+        experiment_config['model_teacher'] = "resnet18_mnist"
+        experiment_config['model_student'] = "resnet18_mnist"
         experiment_config['inputs'] = 1
         experiment_config['channels'] = 1
         experiment_config['batch_size'] = 256
@@ -40,8 +48,8 @@ def resolve_dataset(dataset_name):
         
     if dataset_name=='SVHN':
         experiment_config['code_dim'] = 10
-        experiment_config['model_teacher'] = "resnet9"
-        experiment_config['model_student'] = "resnet9"
+        experiment_config['model_teacher'] = "resnet18"
+        experiment_config['model_student'] = "resnet18"
         experiment_config['inputs'] = 3
         experiment_config['channels'] = 3
         experiment_config['batch_size'] = 256

@@ -28,6 +28,8 @@ import torch.nn as nn
 
 import pandas as pd
 
+from medmnist import ChestMNIST
+
 LOG_DIR_DATA = "/storage3/michel/data"
 LOG_DIR = "/storage3/michel"
 LOG_DIR_MODEL = "/storage3/michel"
@@ -99,6 +101,7 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
          #   params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": epsilon, "delta" : 1e-5}
         if target_dataset =="MNIST": 
             params = {"threshold": 200, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
+            #params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset =="CIFAR10": 
             params = {"threshold": 80, "sigma_threshold": 50, "sigma_gnmax": 20, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset=="SVHN":
@@ -106,7 +109,7 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
         else:
             params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
 
-    #noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick)
+    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick, SSL=True)
     noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format(transfer_dataset))
     noise_vote_array = noise_vote_array.T
     
@@ -129,29 +132,29 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
 if __name__ == '__main__':
     #backbone names ["dead_leaves", "stylegan", "shaders21k_grey", "shaders21k_rgb"]
     
-    #full_run(target_dataset="CIFAR10", transfer_dataset="noise_CIFAR10", nb_teachers=50, backbone_name="shaders21k_rgb", SSL_teachers=True, train_teachers=True, epsilon=10, compare=True)
     
-    #full_run(target_dataset="CIFAR10", transfer_dataset="noise_CIFAR10", nb_teachers=50, SSL_teachers=False, train_teachers=True, epsilon=10, compare=True)
-    
-    #only_transfer_set("CIFAR10", "noise_CIFAR10", 50, epsilon=10)
-    
-    target_dataset="CIFAR10"
+    target_dataset="SVHN" #Tissue
     backbone_name="shaders21k_rgb"
-    nb_teachers=100
+    nb_teachers=250
+    id_range = [0, 10]
     #teachers.util_train_teachers_SSL_pretrained(dataset_name=target_dataset, n_epochs=50, backbone_name=backbone_name,  nb_teachers=nb_teachers)
-
-    #pate_data.query_teachers(target_dataset, "CIFAR10", nb_teachers)
     
-    #help.run_parameter_search("/vote_array/Shaders21k_CIFAR10.npy", "/home/michel/project/Noise_PATE/params/100_Shaders21k_CIFAR10.csv")
+    #teachers.util_train_teachers_range_SSL_pretrained(teacherid_range=[0, 10], dataset_name=target_dataset, n_epochs=50, backbone_name=backbone_name,  nb_teachers=nb_teachers)
 
-    #teachers.util_train_teachers_same_init(dataset_name=target_dataset, n_epochs=50, nb_teachers=nb_teachers, initialize=True) #need to change back to True
-
-    #help.print_top_values("params/100_Shaders21k_CIFAR10.csv", "num_correctly_answered", 20, 10)
-    #workshop_plots.final_plot_CIFAR(num_reps=3)
-    workshop_plots.final_plot(num_reps=3, save_path="results/teachers_not_student_SSL", student_ssl=True, teacher_ssl=False, nb_teachers=200)
+    #teachers.util_train_teachers_range_same_init(dataset_name="SVHN", n_epochs=50, nb_teachers=250, initialize=False, teacherid_range=id_range) #need to change back to True
+    
+    query_datasets = ["noise_SVHN", "dead_leaves_SVHN", "stylegan_SVHN", "Shaders21k_SVHN", "SVHN"]
+    save_path="results/SVHN_no_SSL_eps10_250teachers.pkl"
+    workshop_plots.final_plot_CIFAR(target_dataset="SVHN", num_reps=3, teacher_ssl=False, student_ssl=True,  nb_teachers=250, save_path=save_path, query_datasets=query_datasets)
+    #query_datasets = ["noise_MNIST", "dead_leaves", "FractalDB", "stylegan", "Shaders21k", "FMNIST", "TissueMNIST"]
+    
+    
+    #TISSUE MNIST next!!
+    
+    #workshop_plots.final_plot(num_reps=3, save_path="results/TissueMNIST_no_SSL_250teachers_eps10.pkl", student_ssl=False, teacher_ssl=False, nb_teachers=250, target_dataset="TissueMNIST", query_datasets=query_datasets)
     #experiments.plot_count_histogram("plots/consensus_SSL_noise_MNIST.png", "/storage3/michel/data/vote_array/noise_MNIST.npy", ylim=0.3)
     
-    #only_transfer_set("CIFAR10", "noise_CIFAR10", 100, epsilon=10, backbone_name="shaders21k_rgb")
+    #only_transfer_set("MNIST", "noise_MNIST", 200, epsilon=10, backbone_name="stylegan")
     
     #150 120 40 or 200 120 60
     # CIFAR 70 50 30 or 80 50 20

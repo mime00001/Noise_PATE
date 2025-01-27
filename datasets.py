@@ -15,6 +15,8 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
+from medmnist import TissueMNIST
+
 LOG_DIR_DATA = "/storage3/michel/data"
 LOG_DIR = "/storage3/michel"
 LOG_DIR_MODEL = "/storage3/michel"
@@ -106,6 +108,48 @@ def get_MNIST(batch_size, teacher_id, nb_teachers, valid_size=0.2):
     partition_train = [trainset[i] for i in range(start, end)]
 
     return getDataloaders(partition_train, testset, 0.0, batch_size, num_workers)  # train_loader, valid_loader, test_loader
+
+def get_TissueMNIST(batch_size, teacher_id, nb_teachers, valid_size=0.2):
+    def collate_fn(batch):
+        # Separate features and targets
+        features, targets = zip(*batch)
+        # Stack features and targets and squeeze targets
+        features = torch.stack(features)
+        targets = torch.tensor(np.array(targets)).squeeze()
+        return features, targets
+    num_workers = 4
+    
+    assert int(teacher_id) < int(nb_teachers)
+
+    transform_train = transform=transforms.Compose([
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.102,), (0.1,)) # normalize inputs
+    ])
+
+    transform_test = transforms.Compose([
+         transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.102,), (0.1,)) # normalize inputs
+    ])
+
+    trainset = TissueMNIST(root=os.path.join(LOG_DIR_DATA, "TissueMNIST"), split="train", download=True, size=28, transform=transform_train) #, transform=transform_train
+    testset = TissueMNIST(root=os.path.join(LOG_DIR_DATA, "TissueMNIST"), split="test", download=True, size=28, transform=transform_test) #, transform=transform_test
+    batch_len = int(len(trainset) / nb_teachers)
+    
+    start = teacher_id * batch_len
+    end = (teacher_id+1) * batch_len
+        
+    partition_train = [trainset[i] for i in range(start, end)]
+
+
+    train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size,
+        num_workers=num_workers, collate_fn=collate_fn)
+    valid_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, 
+        num_workers=num_workers, collate_fn=collate_fn)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, 
+        num_workers=num_workers, collate_fn=collate_fn)
+
+    return train_loader, valid_loader, test_loader
+
 
 def get_FMNIST(batch_size, teacher_id, nb_teachers, valid_size=0.2):
     num_workers = 4
@@ -253,6 +297,42 @@ def get_MNIST_PATE(batch_size, validation_size=0.2):
     test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     
     return train_loader, valid_loader, test_loader
+
+def get_TissueMNIST_PATE(batch_size, validation_size=0.2):
+    def collate_fn(batch):
+        # Separate features and targets
+        features, targets = zip(*batch)
+        # Stack features and targets and squeeze targets
+        features = torch.stack(features)
+        targets = torch.tensor(np.array(targets)).squeeze()
+        return features, targets
+    
+    num_workers = 4
+    transform_train = transform=transforms.Compose([
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.102,), (0.1,)) # normalize inputs
+    ])
+
+    transform_test = transforms.Compose([
+         transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.102,), (0.1,)) # normalize inputs
+    ])
+
+    trainset = TissueMNIST(root=os.path.join(LOG_DIR_DATA, "TissueMNIST"), split="train", download=True, size=28, transform=transform_train) #, transform=transform_train
+    testset = TissueMNIST(root=os.path.join(LOG_DIR_DATA, "TissueMNIST"), split="test", download=True, size=28, transform=transform_train) #, transform=transform_test
+    
+    end = int(len(testset)*(1-validation_size))
+    
+    partition_train = [testset[i] for i in range(end)]
+    partition_test = [testset[i] for i in range(end, len(testset))]
+    
+    train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=False, collate_fn=collate_fn)
+    valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=False, collate_fn=collate_fn)
+    test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=False, collate_fn=collate_fn)
+    
+    return train_loader, valid_loader, test_loader    
+    
+
 
 def get_noise_MNIST_PATE(batch_size):
     num_workers = 4
@@ -961,6 +1041,45 @@ def get_MNIST_student(batch_size, validation_size=0.2):
     train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     valid_loader = torch.utils.data.DataLoader(partition_valid, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    
+    return train_loader, valid_loader, test_loader
+
+def get_TissueMNIST_student(batch_size, validation_size=0.2):
+    num_workers = 4
+    def collate_fn(batch):
+        # Separate features and targets
+        features, targets = zip(*batch)
+        # Stack features and targets and squeeze targets
+        features = torch.stack(features)
+        targets = torch.tensor(np.array(targets)).squeeze()
+        return features, targets    
+    transform_train = transform=transforms.Compose([
+        transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.102,), (0.1,)) # normalize inputs
+    ])
+
+    transform_test = transforms.Compose([
+         transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.102,), (0.1,)) # normalize inputs
+    ])
+
+    trainset = TissueMNIST(root=os.path.join(LOG_DIR_DATA, "TissueMNIST"), split="train", download=True, size=28, transform=transform_train) #, transform=transform_train
+    testset = TissueMNIST(root=os.path.join(LOG_DIR_DATA, "TissueMNIST"), split="test", download=True, size=28, transform=transform_train) #, transform=transform_test
+    
+    end = int(len(testset)*(1-validation_size))
+    
+    target_path = LOG_DIR_DATA + "/teacher_labels/TissueMNIST.npy"
+    
+    teacher_labels = np.load(target_path)
+    
+    partition_train = [[testset[i][0], torch.tensor(teacher_labels[i])] for i in range(end) if teacher_labels[i]!= -1] #remove all datapoints, where we have no answer from the teacher ensemble
+    partition_test = [testset[i] for i in range(end, len(testset))]
+    
+    partition_valid = [trainset[i] for i in range(10000)]
+    
+    train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True, collate_fn=collate_fn)
+    valid_loader = torch.utils.data.DataLoader(partition_valid, batch_size=batch_size, num_workers=num_workers, shuffle=True, collate_fn=collate_fn)
+    test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=True, collate_fn=collate_fn)
     
     return train_loader, valid_loader, test_loader
 
