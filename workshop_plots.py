@@ -6,7 +6,7 @@ import conventions
 import datasets, models
 import distill_gaussian
 import compute_FID
-
+import time
 import os
 import pickle
 import random
@@ -110,7 +110,7 @@ def final_plot(num_reps=3, target_dataset ="MNIST",
     np.set_printoptions(suppress=True)
 
 
-    epsilon_range = [10]#[1, 5, 10, 20]
+    epsilon_range = [5]#[1, 5, 10, 20]
     
     accuracies_wo_BN_trick = {}
     accuracies_with_BN_trick = {}
@@ -311,7 +311,130 @@ def final_plot_CIFAR(num_reps=3, target_dataset ="CIFAR10",
                      "num_answered_wo": num_answered_wo, "num_answered_with": num_answered_with}, f)
     print(f"save at: {save_path}")
     
+
+
+def final_plot_TissueMNIST(num_reps=3, target_dataset ="TissueMNIST", 
+            query_datasets = ["noise_MNIST", "dead_leaves", "FractalDB", "stylegan", "Shaders21k", "FMNIST", "TissueMNIST"],
+            save_path="results/TissueMNIST_AUC_all_SSL.pkl", nb_teachers=250, student_ssl=True, teacher_ssl=True):
+    np.set_printoptions(suppress=True)
+
+
+    epsilon_range = [10]#[1, 5, 10, 20]
     
+    accuracies_wo_BN_trick = {}
+    accuracies_with_BN_trick = {}
+    accuracies_wo_BN_trick_std = {}
+    accuracies_with_BN_trick_std = {}
+    auc_wo_BN_trick = {}
+    auc_with_BN_trick = {}
+    auc_wo_BN_trick_std = {}
+    auc_with_BN_trick_std = {}
+    
+    num_answered_wo = {}
+    num_answered_with ={}
+    
+    for ds in query_datasets:
+        accuracies_wo_BN_trick[ds] = [[] for e in epsilon_range]
+        accuracies_with_BN_trick[ds] = [[] for e in epsilon_range]
+        accuracies_wo_BN_trick_std[ds] = [[] for e in epsilon_range]
+        accuracies_with_BN_trick_std[ds] = [[] for e in epsilon_range]
+        num_answered_wo[ds] = [[] for e in epsilon_range]
+        num_answered_with[ds] = [[] for e in epsilon_range]
+        auc_wo_BN_trick[ds] = [[] for e in epsilon_range] 
+        auc_with_BN_trick[ds] = [[] for e in epsilon_range]
+    
+    
+    #pate_data.create_Gaussian_noise(target_dataset, 60000)   
+    #then train the student on the data labeled without BN_trick
+       
+    for ds in query_datasets:
+        vote_array = pate_data.query_teachers(target_dataset, ds, nb_teachers, False, SSL=teacher_ssl)
+        vote_array = vote_array.T
+        
+        for i in range(num_reps):
+            
+            for i, eps in enumerate(epsilon_range): 
+                params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
+                if target_dataset == "TissueMNIST":
+                    params = {"threshold": 170, "sigma_threshold": 100, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
+                    
+                
+                label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
+                
+                achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
+                num_answered = (pate_labels != -1).sum()
+                if student_ssl:
+                    final_acc = student.util_train_SSL_student(target_dataset=target_dataset, transfer_dataset=ds, backbone_name="stylegan" ,n_epochs=50)
+                else:
+                    final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds ,n_epochs=50)
+                    
+                    
+                accuracies_wo_BN_trick[ds][i].append(final_acc)
+                num_answered_wo[ds][i].append(num_answered)
+                final_auc = student.util_compute_student_AUC(target_dataset=target_dataset)
+                auc_wo_BN_trick[ds][i].append(final_auc)
+    
+    for ds in query_datasets:
+        vote_array = pate_data.query_teachers(target_dataset, ds, nb_teachers, True, SSL=teacher_ssl)
+        vote_array = vote_array.T
+        
+        for i in range(num_reps):
+            
+            for i, eps in enumerate(epsilon_range): 
+                params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
+                #if ds=="FMNIST":
+                #    params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": eps, "delta" : 1e-5}
+                    
+                label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(ds)
+                
+                achieved_eps, pate_labels = pate_main.inference_pate(vote_array=vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=eps, delta=params["delta"], num_classes=10, savepath=label_path)
+                num_answered = (pate_labels != -1).sum()
+                if student_ssl:
+                    final_acc = student.util_train_SSL_student(target_dataset=target_dataset, transfer_dataset=ds, backbone_name="stylegan" ,n_epochs=50)
+                else:
+                    final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds ,n_epochs=50) 
+                accuracies_with_BN_trick[ds][i].append(final_acc)
+                num_answered_with[ds][i].append(num_answered)
+                
+                final_auc = student.util_compute_student_AUC(target_dataset=target_dataset)
+                auc_with_BN_trick[ds][i].append(final_auc)
+                
+    print(f"Accuracies with BN trick: {accuracies_with_BN_trick}")
+    print(f"Accuracies without BN trick: {accuracies_wo_BN_trick}")
+    
+    for ds in query_datasets:
+        for i, eps in enumerate(epsilon_range):
+            accuracies_with_BN_trick_std[ds][i] = np.std(accuracies_with_BN_trick[ds][i])
+            accuracies_with_BN_trick[ds][i] = np.mean(accuracies_with_BN_trick[ds][i])
+            accuracies_wo_BN_trick_std[ds][i] = np.std(accuracies_wo_BN_trick[ds][i])
+            accuracies_wo_BN_trick[ds][i] = np.mean(accuracies_wo_BN_trick[ds][i])
+            num_answered_wo[ds][i] = np.mean(num_answered_wo[ds][i])
+            num_answered_with[ds][i] = np.mean(num_answered_with[ds][i])
+            auc_wo_BN_trick[ds][i] = np.mean(auc_wo_BN_trick[ds][i])
+            auc_with_BN_trick[ds][i] = np.mean(auc_with_BN_trick[ds][i])
+            auc_wo_BN_trick_std[ds][i] = np.std(auc_wo_BN_trick[ds][i])
+            auc_with_BN_trick_std[ds][i] = np.std(auc_with_BN_trick[ds][i])
+            
+    
+    #display them in the table as well
+    for key, value in accuracies_wo_BN_trick.items():
+        print(f"RS: {key}: {value}")
+        
+    for key, value in accuracies_with_BN_trick.items():
+        print(f"CS: {key}: {value}")
+        
+    
+    
+    
+    with open(save_path, "wb") as f:
+        pickle.dump({"accuracies_wo": accuracies_wo_BN_trick, "accuracies_wo_std": accuracies_wo_BN_trick_std,
+                     "accuracies_with": accuracies_with_BN_trick, "accuracies_with_std": accuracies_with_BN_trick_std,
+                     "num_answered_wo": num_answered_wo, "num_answered_with": num_answered_with, "auc_wo" : auc_wo_BN_trick,
+                     "auc_wo_std" : auc_wo_BN_trick_std, "auc_with": auc_with_BN_trick, "auc_with_std": auc_with_BN_trick_std}, f)
+    
+    
+
+
     
 
 
@@ -497,3 +620,135 @@ def compare_KID_scores_FMNIST(length=500):
     print(kid_scores)
     with open("results/kid_scores_FMNIST.pkl", "wb") as f:
         pickle.dump(kid_scores, f)
+        
+def only_transfer_set_different_methods(target_dataset= "MNIST", transfer_dataset="stylegan"):
+    
+    epsilon_range = [1, 2, 3, 4, 5, 6]
+    nb_teachers = 200
+    
+    method = [(False, False, False), (True, False, False), (False, True, True), (True, True, True)]
+    
+    results= {}
+    results["PATE"] = {"accuracy" : [[] for e in epsilon_range], "num_answered" : [[] for e in epsilon_range]}
+    results["DataFreeKD"] = {"accuracy" : [[] for e in epsilon_range], "num_answered" : [[] for e in epsilon_range]}
+    results["Pretraining"] ={"accuracy" : [[] for e in epsilon_range], "num_answered" : [[] for e in epsilon_range]}
+    results["DIET_PATE"] = {"accuracy" : [[] for e in epsilon_range], "num_answered" : [[] for e in epsilon_range]}
+    results["PATE_MNIST"] = {"accuracy" : [[] for e in epsilon_range], "num_answered" : [[] for e in epsilon_range]}
+    
+    
+    for i, method_specs in enumerate(method):
+        bn_trick, ssl_teacher, ssl_student = method_specs
+        for num_eps, epsilon in enumerate(epsilon_range):
+        
+
+            params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
+
+            if epsilon == 1:
+                noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=bn_trick, SSL=ssl_teacher)
+            noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format(transfer_dataset))
+            noise_vote_array = noise_vote_array.T
+            
+            #then perform inference pate
+            noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(transfer_dataset)
+            eps, noise_votes = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path) 
+            num_answered = (noise_votes != -1).sum()
+            print(len(noise_votes))
+            
+            #then train the student on Gaussian noise    
+            if ssl_student:
+                finalacc = student.util_train_SSL_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset,backbone_name="stylegan", n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params)
+            else:
+                finalacc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params)
+            
+            if i == 0:
+                results["PATE"]["accuracy"][num_eps].append(finalacc)
+                results["PATE"]["num_answered"][num_eps].append(num_answered)
+            if i == 1:
+                results["DataFreeKD"]["accuracy"][num_eps].append(finalacc)
+                results["DataFreeKD"]["num_answered"][num_eps].append(num_answered)
+            if i == 2:
+                results["Pretraining"]["accuracy"][num_eps].append(finalacc)
+                results["Pretraining"]["num_answered"][num_eps].append(num_answered)
+            if i == 3:
+                results["DIET_PATE"]["accuracy"][num_eps].append(finalacc)
+                results["DIET_PATE"]["num_answered"][num_eps].append(num_answered)
+    
+    for num_eps, epsilon in enumerate(epsilon_range):
+            params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
+
+            if epsilon == 1:
+                noise_vote_array = pate_data.query_teachers(target_dataset="MNIST", query_dataset="MNIST", nb_teachers=nb_teachers, BN_trick=False, SSL=False)
+            noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format(transfer_dataset))
+            noise_vote_array = noise_vote_array.T
+            
+            #then perform inference pate
+            noise_label_path = LOG_DIR_DATA + "/teacher_labels/{}.npy".format(transfer_dataset)
+            eps, noise_votes = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=10, savepath=noise_label_path) 
+            num_answered = (noise_votes != -1).sum()
+            print(len(noise_votes))
+            
+            #then train the student on Gaussian noise    
+            finalacc = student.util_train_student(target_dataset="MNIST", transfer_dataset="MNIST", n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params)
+            results["PATE_MNIST"]["accuracy"][num_eps].append(finalacc)
+            results["PATE_MNIST"]["num_answered"][num_eps].append(num_answered)
+    
+    
+    
+    save_path = "results/differenteps_stylegan.pkl"
+    print(results)
+    with open(save_path, "wb") as f:
+        pickle.dump(results, f)
+    
+ 
+ 
+def timing_dataloaders(batch_size):
+    batch_size = batch_size
+    num_workers = 4
+    validation_size = 0.1
+    
+
+    transform_test = transforms.Compose([
+         transforms.ToTensor(), # first, convert image to PyTorch tensor
+        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
+    ])
+
+     #, transform=transform_train
+    testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
+    
+    end = int(len(testset)*(1-validation_size))
+    
+    partition_train = [testset[i] for i in range(end)]
+    partition_test = [testset[i] for i in range(end, len(testset))]
+    
+    train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    valid_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=False)
+    
+    return train_loader, valid_loader, test_loader
+ 
+def time_inference():
+     
+    teacher_name = "teacher_MNIST_mnistresnet.model"
+    teacher_name += "_{}".format(1)
+    
+    teacher_path = os.path.join("/storage3/michel/OldPretrained_NW/SL_MNIST", teacher_name)
+    
+    teacher_nw = torch.load(teacher_path)
+    teacher_nw = teacher_nw.to("cuda")
+    
+    for batch_size in [1, 32]:
+        train_loader, _, _ = timing_dataloaders(batch_size=batch_size)
+        
+        all_times = []
+
+        for data, target in train_loader:
+            start_time = time.time()
+            data, target = data.to("cuda"), target.to("cuda")
+            output = teacher_nw(data)
+            end_time = time.time()
+            
+            elapsed = start_time - end_time
+            all_times.append(elapsed)
+            
+        print(f"Average time per batch_size {batch_size}: {np.mean(all_times)} +- {np.std(all_times)}")
+        

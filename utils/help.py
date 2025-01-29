@@ -12,7 +12,7 @@ import pate_main
 import distill_gaussian
 
 import matplotlib.pyplot as plt
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageDraw, ImageFont
 import datasets
 import torchvision
 import torchvision.transforms as transforms
@@ -21,6 +21,7 @@ import torch.nn as nn
 import numpy as np
 import os
 from utils import misc
+import random
 
 import pandas as pd
 
@@ -301,7 +302,7 @@ def show_images(dataset="noise_MNIST", num=5, padding=1):
         y = row * (height + padding)
         grid_image.paste(img, (x, y))
     
-    save_path = os.path.join(LOG_DIR, "Images", "{}_grid.jpeg".format(dataset))
+    save_path = os.path.join("/home/michel/project/Noise_PATE/plots", "{}_grid.jpeg".format(dataset))
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     grid_image.save(save_path)
     print(labels)    
@@ -401,3 +402,87 @@ def print_SVHN_MNIST():
     for i in range(10):
         save_path = LOG_DIR + "/Images/{}/".format("SVHN_MNIST")+ str(i)+".jpeg"
         gray_images[i].save(save_path)
+        
+       
+       
+       
+    
+def combine_images_from_directories(directories=None, output_path=None, dataset_names=None, image_size=(200, 200), padding=10, font_path=None):
+    """
+    Combine images from four directories into one image with two rows and four columns.
+    Add dataset names below the images.
+
+    Parameters:
+        directories (list of str): List of four directories containing images.
+        output_path (str): Path to save the combined image.
+        dataset_names (list of str): List of dataset names to display below each column of images.
+        image_size (tuple): Desired size (width, height) for each image.
+        padding (int): Padding between images in pixels.
+        font_path (str): Path to a .ttf font file for text. If None, default font is used.
+
+    """
+    path1="/storage3/michel/data/stylegan-oriented"
+    path2="/storage3/michel/data/FractalDB"
+    path3="/storage3/michel/data/dead_leaves-mixed" 
+    path4="/storage3/michel/data/shaders21k"
+    
+    directories= [path1, path2, path3, path4]
+       
+    dataset_names = ["StyleGAN", "Fractals", "Leaves", "Shaders"]
+    
+    if len(directories) != 4:
+        raise ValueError("Exactly four directories are required.")
+
+    if len(dataset_names) != 4:
+        raise ValueError("Exactly four dataset names are required.")
+
+    combined_width = 4 * image_size[0] + 5 * padding  # 4 images + 5 paddings
+    combined_height = 2 * image_size[1] + 3 * padding + 40  # 2 rows + 3 paddings + text area
+
+    # Create a blank canvas for the output image
+    combined_image = Image.new("RGB", (combined_width, combined_height), "white")
+    draw = ImageDraw.Draw(combined_image)
+
+    # Load font
+    if font_path:
+        font = ImageFont.truetype(font_path, 20)
+    else:
+        font = ImageFont.load_default(size=30)
+
+    for col, (directory, dataset_name) in enumerate(zip(directories, dataset_names)):
+        if not os.path.isdir(directory):
+            raise FileNotFoundError(f"Directory not found: {directory}")
+
+        # Get a list of image files in the directory
+        image_files = [f for f in os.listdir(directory) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
+        if len(image_files) < 2:
+            raise ValueError(f"Not enough images in directory: {directory}")
+
+        # Randomly select two images from the directory
+        selected_images = [image_files[0], image_files[1]]
+
+        for row, image_file in enumerate(selected_images):
+            # Open and resize the image
+            image_path = os.path.join(directory, image_file)
+            img = Image.open(image_path)
+            if dataset_name == "Fractals":
+                img = ImageOps.fit(img, image_size, Image.Resampling.NEAREST)
+            else:
+                img = ImageOps.fit(img, image_size)
+
+
+            # Calculate position for the image
+            x_offset = col * (image_size[0] + padding) + padding
+            y_offset = row * (image_size[1] + padding) + padding
+
+            # Paste the image onto the canvas
+            combined_image.paste(img, (x_offset, y_offset))
+
+        # Add dataset name below the column
+        text_x = col * (image_size[0] + padding) + padding + image_size[0] // 2
+        text_y = 2 * (image_size[1] + padding) + padding
+        draw.text((text_x, text_y), dataset_name, fill="black", font=font, anchor="mm")
+    output_path="plots/examples_programmatic_data.pdf"
+    # Save the combined image
+    combined_image.save(output_path)
+    print(f"Combined image saved to {output_path}")

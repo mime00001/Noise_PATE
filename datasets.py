@@ -22,21 +22,10 @@ LOG_DIR = "/storage3/michel"
 LOG_DIR_MODEL = "/storage3/michel"
 
 def getDataloaders(trainset, testset, valid_size, batch_size, num_workers):
-    num_train = len(trainset)
-    indices = list(range(num_train))
-    np.random.shuffle(indices)
-    split = int(np.floor(valid_size * num_train))
-    train_idx, valid_idx = indices[split:], indices[:split]
 
-    train_sampler = SubsetRandomSampler(train_idx)
-    valid_sampler = SubsetRandomSampler(valid_idx)
-
-    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-        sampler=train_sampler, num_workers=num_workers)
-    valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, 
-        sampler=valid_sampler, num_workers=num_workers)
-    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, 
-        num_workers=num_workers)
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers)
+    valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers)
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers)
 
     return train_loader, valid_loader, test_loader
 
@@ -201,11 +190,11 @@ def get_SVHN(batch_size, teacher_id, nb_teachers, valid_size=0.2):
 
     trainset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="train", download=True, transform=transform_train) #, transform=transform_train
     
-    extraset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="extra", download=True, transform=transform_extra)
+    #extraset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="extra", download=True, transform=transform_extra)
     
     testset = torchvision.datasets.SVHN(root=LOG_DIR_DATA, split="test", download=True, transform=transform_test) #, transform=transform_test
 
-    trainset= ConcatDataset([trainset, extraset])
+    #trainset= ConcatDataset([trainset, extraset])
 
     
 

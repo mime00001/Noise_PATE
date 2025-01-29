@@ -309,10 +309,9 @@ def util_train_teachers_SSL_pretrained(dataset_name, n_epochs, backbone_name, nb
             log = model.load_state_dict(state_dict, strict=False)
             assert log.missing_keys == ['fc.weight', 'fc.bias']
 
-            if dataset_name != "SVHN":
-                for name, param in model.named_parameters():
-                        if name not in ['fc.weight', 'fc.bias']:
-                            param.requires_grad = False
+            for name, param in model.named_parameters():
+                    if name not in ['fc.weight', 'fc.bias']:
+                        param.requires_grad = False
                 
 
         teacher_model = model.to(device)
@@ -418,19 +417,9 @@ def util_train_teachers_range_SSL_pretrained(dataset_name, n_epochs, backbone_na
             log = model.load_state_dict(state_dict, strict=False)
             assert log.missing_keys == ['fc.weight', 'fc.bias']
             
-            if dataset_name != "SVHN":
-                for name, param in model.named_parameters():
-                        if name not in ['fc.weight', 'fc.bias']:
-                            param.requires_grad = False
-            else:
-                layers_to_unfreeze = ['fc.weight', 'fc.bias']
-                layer_names = [name for name, _ in model.named_parameters()]
-                last_nine_layers = layer_names[-18:]  # Fine tune 9 layers
-                layers_to_unfreeze.extend(last_nine_layers)
-                
-                for name, param in model.named_parameters():
-                    if name not in layers_to_unfreeze:
-                        param.requires_grad = False
+            for name, param in model.named_parameters():
+                if name not in ['fc.weight', 'fc.bias']:
+                    param.requires_grad = False
 
             parameters = list(filter(lambda p: p.requires_grad, model.parameters()))
             #assert len(parameters) == 2  # fc.weight, fc.bias

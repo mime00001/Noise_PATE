@@ -16,6 +16,7 @@ import experiments
 import workshop_plots
 import datasets
 import compute_FID
+import capc
 
 import pickle
 import torchvision
@@ -100,8 +101,8 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
         #if transfer_dataset=="FMNIST":
          #   params = {"threshold": 200, "sigma_threshold": 100, "sigma_gnmax": 20, "epsilon": epsilon, "delta" : 1e-5}
         if target_dataset =="MNIST": 
-            params = {"threshold": 200, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
-            #params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
+            #params = {"threshold": 200, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
+            params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset =="CIFAR10": 
             params = {"threshold": 80, "sigma_threshold": 50, "sigma_gnmax": 20, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset=="SVHN":
@@ -109,7 +110,7 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
         else:
             params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
 
-    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick, SSL=True)
+    #noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick, SSL=True)
     noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format(transfer_dataset))
     noise_vote_array = noise_vote_array.T
     
@@ -121,7 +122,7 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
     
     #then train the student on Gaussian noise    
     if backbone_name:
-        finalacc = student.util_train_SSL_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset,backbone_name=backbone_name, n_epochs=30, lr=0.001, optimizer="Adam", kwargs=params)
+        finalacc = student.util_train_SSL_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset,backbone_name=backbone_name, n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params)
     else:
         finalacc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=30, lr=0.001, optimizer="Adam", kwargs=params)
     return finalacc, num_answered
@@ -132,7 +133,16 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
 if __name__ == '__main__':
     #backbone names ["dead_leaves", "stylegan", "shaders21k_grey", "shaders21k_rgb"]
     
+    workshop_plots.only_transfer_set_different_methods()
+    #workshop_plots.final_plot(save_path="results/MNIST_with_SSL_200teachers_eps5.pkl", nb_teachers=200, student_ssl=True, teacher_ssl=True)
+    #capc.avg_teacher_accs()
+    #help.combine_images_from_directories()
     
+    """ epsilon_range = [6] #
+    for eps in epsilon_range:
+        acc, num_answered = only_transfer_set("MNIST", "stylegan", 200, epsilon=eps, backbone_name="stylegan")
+        print(f"Accuracy: {acc} \t Num Answered: {num_answered}")
+     """
     target_dataset="SVHN" #Tissue
     backbone_name="shaders21k_rgb"
     nb_teachers=250
@@ -143,15 +153,19 @@ if __name__ == '__main__':
 
     #teachers.util_train_teachers_range_same_init(dataset_name="SVHN", n_epochs=50, nb_teachers=250, initialize=False, teacherid_range=id_range) #need to change back to True
     
-    query_datasets = ["noise_SVHN", "dead_leaves_SVHN", "stylegan_SVHN", "Shaders21k_SVHN", "SVHN"]
-    save_path="results/SVHN_no_SSL_eps10_250teachers.pkl"
-    workshop_plots.final_plot_CIFAR(target_dataset="SVHN", num_reps=3, teacher_ssl=False, student_ssl=True,  nb_teachers=250, save_path=save_path, query_datasets=query_datasets)
+    #query_datasets = ["noise_SVHN", "dead_leaves_SVHN", "stylegan_SVHN", "Shaders21k_SVHN", "SVHN"]
+    #save_path="results/SVHN_no_SSL_eps10_250teachers.pkl"
+    #workshop_plots.final_plot_CIFAR(target_dataset="SVHN", num_reps=3, teacher_ssl=False, student_ssl=True,  nb_teachers=250, save_path=save_path, query_datasets=query_datasets)
     #query_datasets = ["noise_MNIST", "dead_leaves", "FractalDB", "stylegan", "Shaders21k", "FMNIST", "TissueMNIST"]
     
     
     #TISSUE MNIST next!!
     
-    #workshop_plots.final_plot(num_reps=3, save_path="results/TissueMNIST_no_SSL_250teachers_eps10.pkl", student_ssl=False, teacher_ssl=False, nb_teachers=250, target_dataset="TissueMNIST", query_datasets=query_datasets)
+    #help.combine_images_from_directories(None, "plots/examples_syntheticdata.pdf", (128, 128))
+    #help.show_images("dead_leaves", 4)
+    
+    #workshop_plots.final_plot_TissueMNIST(save_path="results/TissueMNIST_AUC_no_SSL.pkl", student_ssl=False, teacher_ssl=False)
+    #workshop_plots.final_plot(num_reps=3, save_path="results/MNIST_teacher_SSL_student_not_200teachers_eps10.pkl", student_ssl=False, teacher_ssl=True, nb_teachers=200, target_dataset="MNIST")
     #experiments.plot_count_histogram("plots/consensus_SSL_noise_MNIST.png", "/storage3/michel/data/vote_array/noise_MNIST.npy", ylim=0.3)
     
     #only_transfer_set("MNIST", "noise_MNIST", 200, epsilon=10, backbone_name="stylegan")

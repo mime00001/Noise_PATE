@@ -7,6 +7,8 @@ import torchvision
 import torch.nn as nn
 from torch.optim import Adam, SGD
 import torch.nn.functional as F
+from sklearn.metrics import roc_auc_score
+from torch.nn.functional import softmax
 
 import models
 import datasets
@@ -207,9 +209,9 @@ def util_train_SSL_student(target_dataset, transfer_dataset, backbone_name, n_ep
 
         log = model.load_state_dict(state_dict, strict=False)
         assert log.missing_keys == ['fc.weight', 'fc.bias']
-        if target_dataset != "SVHN": #only freeze if not svhn
-                for name, param in model.named_parameters():
-                        if name not in ['fc.weight', 'fc.bias']:
+        #only freeze if not svhn
+        for name, param in model.named_parameters():
+                if name not in ['fc.weight', 'fc.bias']:
                             param.requires_grad = False
 
     student_model = model.to(device)
@@ -291,3 +293,50 @@ def util_train_student_same_init(target_dataset, transfer_dataset, n_epochs, lr=
     print("Student training is finished.")
     
     return ret
+
+
+def util_compute_student_AUC(target_dataset):
+    device = misc.get_device()
+    experiment_config = conventions.resolve_dataset(target_dataset)
+    # override
+
+    print('Experiment Configuration:')
+    print(experiment_config)
+
+    os.makedirs(LOG_DIR_DATA, exist_ok=True)
+    os.makedirs(LOG_DIR_MODEL + '/Pretrained_NW/{}'.format(target_dataset), exist_ok=True)
+    
+    
+    auc_score = 0
+    
+    _, _, target_loader = eval("datasets.get_{}_student({})".format(
+        target_dataset,
+        experiment_config["batch_size"]
+    ))
+    
+    model_name = conventions.resolve_student_name(experiment_config)
+    model_path = os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(target_dataset), model_name)
+    model = torch.load(model_path, map_location=torch.device(device))
+    model.train()
+    model.to(device)
+
+    all_preds = []
+    all_labels = []
+
+    # Evaluate the model on the dataset
+    with torch.no_grad():
+        for data, labels in target_loader:
+            data = data.to(device)
+            labels = labels.to(device)
+
+            # Forward pass
+            outputs = model(data)
+
+            # Apply softmax to obtain probabilities (if not logits)
+            probs = softmax(outputs, dim=1)[:, 1]  # Assuming binary classification, take class 1 probability
+            all_preds.extend(probs.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+
+    # Compute AUC
+    auc_score = roc_auc_score(all_labels, all_preds, multi_class="ovo")
+    return auc_score
