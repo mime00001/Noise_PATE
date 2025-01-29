@@ -148,6 +148,8 @@ if __name__ == '__main__':
     nb_teachers=250
     id_range = [0, 10]
     
+    
+    
     #teachers.util_train_teachers_SSL_pretrained(dataset_name=target_dataset, n_epochs=50, backbone_name=backbone_name,  nb_teachers=nb_teachers)
     
     #teachers.util_train_teachers_range_SSL_pretrained(teacherid_range=[0, 10], dataset_name=target_dataset, n_epochs=50, backbone_name=backbone_name,  nb_teachers=nb_teachers)
