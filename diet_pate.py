@@ -30,7 +30,7 @@ LOG_DIR = ""
 LOG_DIR_MODEL = ""
 
 
-def full_run(target_dataset="MNIST", transfer_dataset="noise_MNIST", backbone_name="stylegan", nb_teachers=200, params=None, SSL_teachers=True, train_teachers=True, epsilon=10):
+def full_run(target_dataset="MNIST", transfer_dataset="noise_MNIST", backbone_name="stylegan", nb_teachers=200, params=None, SSL_teachers=True, train_teachers=True, epsilon=10, BN_trick=True):
     
     
     if target_dataset == "TissueMNIST":
@@ -55,7 +55,7 @@ def full_run(target_dataset="MNIST", transfer_dataset="noise_MNIST", backbone_na
     
 
     #then get the noisy labels for the noise_MNIST
-    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=True) 
+    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick) 
     noise_vote_array = noise_vote_array.T
     
     #then perform inference pate

@@ -19,5 +19,15 @@ The simplest way to start with the experiments is to first perform a full traini
 
 In the diet_pate.py file execute the full_run() function
 
-```python full_run(target_dataset="MNIST", transfer_dataset="noise_MNIST", backbone_name="stylegan", nb_teachers=200, SSL_teachers=True, train_teachers=True, compare=False, epsilon=5) ```
+```python full_run(target_dataset="MNIST", transfer_dataset="noise_MNIST", backbone_name="stylegan", nb_teachers=200, SSL_teachers=True, train_teachers=True, compare=False, epsilon=5,  BN_trick=True) ```
+
+You can then repeat the same for CIFAR10 by switching target_dataset and transfer_dataset to appropriate options. For CIFAR10 also use 50 teachers. 
+
+For the different methods, you will have to specify the variables as follows:
+
+PATE : ```python backbone_name=None, SSL_teachers=False, BN_trick=False ```
+DataFreeKD: ```python backbone_name=None, SSL_teachers=False, BN_trick=True ```
+Pretraining: ```python backbone_name=stylegan, SSL_teachers=True, BN_trick=False ```
+DIET-PATE: ```python backbone_name=stylegan, SSL_teachers=True, BN_trick=True ```
+
 

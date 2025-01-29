@@ -142,35 +142,6 @@ def get_TissueMNIST(batch_size, teacher_id, nb_teachers, valid_size=0.2):
     return train_loader, valid_loader, test_loader
 
 
-def get_FMNIST(batch_size, teacher_id, nb_teachers, valid_size=0.2):
-    num_workers = 4
-    
-    assert int(teacher_id) < int(nb_teachers)
-
-    transform_train=transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
-    ])
-
-    transform_test = transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
-    ])
-
-    trainset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
-    testset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
-    
-    batch_len = int(len(trainset) / nb_teachers)
-    assert batch_len >= batch_size, "batchsize  too large for number of teachers, each teacher has less than batchsize samples"
-    
-    start = teacher_id * batch_len
-    end = (teacher_id+1) * batch_len
-        
-    partition_train = [trainset[i] for i in range(start, end)]
-
-    return getDataloaders(partition_train, testset, 0.0, batch_size, num_workers)  # train_loader, valid_loader, test_loader
-
-
 #these datasets are for querying the teachers, they return three dataloaders,
 # where only the first one should be used for teacher querying, the last one is the validation set for the student
 
@@ -209,19 +180,6 @@ def get_CIFAR10_PATE(batch_size, validation_size=0.2):
     test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     
     return train_loader, valid_loader, test_loader
-
-def get_noise_CIFAR10_PATE(batch_size):
-    num_workers = 4
-    
-    path = LOG_DIR_DATA + "/noise_CIFAR10.npy"
-    
-    data_set = np.load(path)
-    
-    train_data = [(torch.FloatTensor(data_set[i]), torch.tensor(0)) for i in range(len(data_set))] #will probably need to rewrite this, dont know if unsqueeze is necessary for CIFAR10 noise data
-    
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    
-    return train_loader, train_loader, train_loader #return same dataloader so i dont have to rewrite function
 
 def get_MNIST_PATE(batch_size, validation_size=0.2):
     num_workers = 4
@@ -283,22 +241,20 @@ def get_TissueMNIST_PATE(batch_size, validation_size=0.2):
     
     return train_loader, valid_loader, test_loader    
     
-
-
-def get_noise_MNIST_PATE(batch_size):
+def get_noise_CIFAR10_PATE(batch_size):
     num_workers = 4
     
-    path = LOG_DIR_DATA + "/noise_MNIST.npy"
+    path = LOG_DIR_DATA + "/noise_CIFAR10.npy"
     
     data_set = np.load(path)
     
-    train_data = [(torch.FloatTensor(data_set[i]).unsqueeze(0), torch.tensor(0)) for i in range(len(data_set))]
+    train_data = [(torch.FloatTensor(data_set[i]), torch.tensor(0)) for i in range(len(data_set))] #will probably need to rewrite this, dont know if unsqueeze is necessary for CIFAR10 noise data
     
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     
     return train_loader, train_loader, train_loader #return same dataloader so i dont have to rewrite function
 
-def get_noise_FMNIST_PATE(batch_size):
+def get_noise_MNIST_PATE(batch_size):
     num_workers = 4
     
     path = LOG_DIR_DATA + "/noise_MNIST.npy"
@@ -354,53 +310,7 @@ def get_dead_leaves_PATE(batch_size):
     
     return train_loader, train_loader, train_loader #return same dataloader so i dont have to rewrite function
 
-def get_dead_leaves_FMNIST_PATE(batch_size):
-    
-    num_workers = 4
-    
-    path = LOG_DIR_DATA + "/dead_leaves-mixed.npy"
-    
-    images= np.load(path)
-    
-    mean = images.mean()
-    std = images.std()
-    
-    train_data = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(0)) for i in range(len(images))]
-    
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    
-    return train_loader, train_loader, train_loader #return same dataloader so i dont have to rewrite function
-
 def get_stylegan_PATE(batch_size):
-    
-    """ path = LOG_DIR_DATA + "/stylegan-oriented/"
-    
-    images=[]
-    
-    for image in os.listdir(path):
-        images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
-        
-    #need to be normalized before putting into network
-    images = np.array(images) """
-    
-    
-    
-    num_workers=4
-    
-    path = LOG_DIR_DATA + "/stylegan-oriented.npy"
-    
-    images = np.load(path)
-    
-    mean = images.mean()
-    std = images.std()
-    
-    train_data = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(0)) for i in range(len(images))]
-    
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    
-    return train_loader, train_loader, train_loader
-
-def get_stylegan_FMNIST_PATE(batch_size):
     
     """ path = LOG_DIR_DATA + "/stylegan-oriented/"
     
@@ -459,71 +369,7 @@ def get_FractalDB_PATE(batch_size):
     
     return train_loader, train_loader, train_loader
 
-def get_FractalDB_FMNIST_PATE(batch_size):
-    
-    """ path = LOG_DIR_DATA + "/FractalDB/"
-    
-    images=[]
-    
-    for image in os.listdir(path):
-        images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
-        
-    #need to be normalized before putting into network
-    images = np.array(images) 
-    path = LOG_DIR_DATA + "/FractalDB.npy"
-    np.save(path, images) """
-    
-    
-    num_workers=4
-    
-    path = LOG_DIR_DATA + "/FractalDB.npy"
-    
-    images = np.load(path)
-    
-    mean = images.mean()
-    std = images.std()
-    
-    train_data = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(0)) for i in range(len(images))]
-    
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    
-    return train_loader, train_loader, train_loader
-
 def get_Shaders21k_PATE(batch_size):
-    """ path = LOG_DIR_DATA + "/shaders21k/"
-    
-    images=[]
-    for image in os.listdir(path):
-        images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
-        
-    #need to be normalized before putting into network
-    images = np.array(images) 
-    
-    
-    path = LOG_DIR_DATA + "/Shaders21k.npy"
-    np.save(path, images) """
-    
-    
-    num_workers=4
-    
-    path = LOG_DIR_DATA + "/Shaders21k.npy"
-    
-    images = np.load(path)
-    
-    mean = images.mean()
-    std = images.std()
-    
-    num_points = 100000
-    if len(images) < num_points:
-        num_points = len(images)
-    
-    train_data = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(0)) for i in range(num_points)]
-    
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    
-    return train_loader, train_loader, train_loader
-
-def get_Shaders21k_FMNIST_PATE(batch_size):
     """ path = LOG_DIR_DATA + "/shaders21k/"
     
     images=[]
@@ -627,31 +473,7 @@ def get_MIX_PATE(batch_size):
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     
     return train_loader, train_loader, train_loader
-
-def get_MNIST_FMNIST_PATE(batch_size, validation_size=0.2):
-    num_workers = 4
-    transform_train = transform=transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
-    ])
-
-    trainset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
-    transform_test = transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
-    ])
-
-    
-    testset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
-    
-    
-    
-    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    valid_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    
-    return train_loader, train_loader, train_loader
-        
+      
 def get_dead_leaves_CIFAR10_PATE(batch_size):
     num_workers=4
     
@@ -888,34 +710,6 @@ def get_noise_MNIST_student(batch_size, validation_size=0.2):
     
     return train_loader, valid_loader, test_loader
 
-def get_noise_FMNIST_student(batch_size, validation_size=0.2):
-    num_workers = 4
-    
-    path = LOG_DIR_DATA + "/noise_MNIST.npy"
-    target_path = LOG_DIR_DATA + "/teacher_labels/noise_FMNIST.npy"
-    
-    dataset = np.load(path)
-    targets = np.load(target_path)
-    
-    assert len(dataset) == len(targets), "size of dataset and teacher labels does not match"
-    
-    transform_test = transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
-    ])
-
-    testset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
-    
-    trainset = [(torch.FloatTensor(dataset[i]).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(dataset)) if targets[i] != -1] #also need to recheck if we need this
-
-    
-    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    
-    
-    return train_loader, valid_loader, test_loader
-
 def get_FMNIST_student(batch_size, validation_size=0.2):
     num_workers = 4
     
@@ -951,8 +745,6 @@ def get_FMNIST_student(batch_size, validation_size=0.2):
     
     return train_loader, valid_loader, test_loader
 
-
-
 def get_dead_leaves_student(batch_size, validation_size=0.2):
     num_workers = 4
     
@@ -980,45 +772,6 @@ def get_dead_leaves_student(batch_size, validation_size=0.2):
     ])
     
     testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
-    
-    trainset = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(images)) if targets[i] != -1] #also need to recheck if we need this
-    
-    print("Number of samples for student training: {}".format(len(trainset)))
-    
-    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    
-    
-    return train_loader, valid_loader, test_loader
-
-def get_dead_leaves_FMNIST_student(batch_size, validation_size=0.2):
-    num_workers = 4
-    
-    path = LOG_DIR_DATA + "/dead_leaves-mixed.npy"
-    target_path = LOG_DIR_DATA + "/teacher_labels/dead_leaves_FMNIST.npy"
-    
-    targets = np.load(target_path)
-    
-    images = np.load(path)
-    
-    """ #load .jpg dead_leave images and turn into grayscale and reduce dimension so it can be used for MNIST
-    for image in os.listdir(path):
-        images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
-        
-    #need to be normalized before putting into network
-    images = np.array(images) """
-    
-    assert len(images) == len(targets)
-    mean = images.mean()
-    std = images.std()
-    
-    transform_test = transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
-    ])
-
-    testset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
     
     trainset = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(images)) if targets[i] != -1] #also need to recheck if we need this
     
@@ -1071,47 +824,6 @@ def get_stylegan_student(batch_size, validation_size=0.2):
     
     return train_loader, valid_loader, test_loader
 
-def get_stylegan_FMNIST_student(batch_size, validation_size=0.2):
-    num_workers=4
-
-
-    path = LOG_DIR_DATA + "/stylegan-oriented.npy"
-    target_path = LOG_DIR_DATA + "/teacher_labels/stylegan_FMNIST.npy"
-    
-    targets = np.load(target_path)
-    
-    images = np.load(path)
-    
-    """ #load .jpg dead_leave images and turn into grayscale and reduce dimension so it can be used for MNIST
-    for image in os.listdir(path):
-        images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
-        
-    #need to be normalized before putting into network
-    images = np.array(images) """
-    
-    assert len(images) == len(targets)
-    mean = images.mean()
-    std = images.std()
-    
-    transform_test = transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
-    ])
-
-    testset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
-    
-    trainset = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(images)) if targets[i] != -1] #also need to recheck if we need this
-    
-    print("Number of samples for student training: {}".format(len(trainset)))
-    
-    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    
-    
-    return train_loader, valid_loader, test_loader
-
-
 def get_FractalDB_student(batch_size, validation_size=0.2):
     num_workers=4
 
@@ -1140,46 +852,6 @@ def get_FractalDB_student(batch_size, validation_size=0.2):
     ])
     
     testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
-    
-    trainset = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(images)) if targets[i] != -1] #also need to recheck if we need this
-    
-    print("Number of samples for student training: {}".format(len(trainset)))
-    
-    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    
-    
-    return train_loader, valid_loader, test_loader
-
-def get_FractalDB_FMNIST_student(batch_size, validation_size=0.2):
-    num_workers=4
-
-
-    path = LOG_DIR_DATA + "/FractalDB.npy"
-    target_path = LOG_DIR_DATA + "/teacher_labels/FractalDB_FMNIST.npy"
-    
-    targets = np.load(target_path)
-    
-    images = np.load(path)
-    
-    """ #load .jpg dead_leave images and turn into grayscale and reduce dimension so it can be used for MNIST
-    for image in os.listdir(path):
-        images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
-        
-    #need to be normalized before putting into network
-    images = np.array(images) """
-    
-    assert len(images) == len(targets)
-    mean = images.mean()
-    std = images.std()
-    
-    transform_test = transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
-    ])
-
-    testset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
     
     trainset = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(targets[i])) for i in range(len(images)) if targets[i] != -1] #also need to recheck if we need this
     
@@ -1236,50 +908,6 @@ def get_Shaders21k_student(batch_size, validation_size=0.2):
     
     return train_loader, valid_loader, test_loader
 
-def get_Shaders21k_FMNIST_student(batch_size, validation_size=0.2):
-    num_workers=4
-
-
-    path = LOG_DIR_DATA + "/Shaders21k.npy"
-    target_path = LOG_DIR_DATA + "/teacher_labels/Shaders21k_FMNIST.npy"
-    
-    targets = np.load(target_path)
-    
-    images = np.load(path)
-    
-    """ #load .jpg dead_leave images and turn into grayscale and reduce dimension so it can be used for MNIST
-    for image in os.listdir(path):
-        images.append(ImageOps.grayscale(Image.open((path + image))).resize((28, 28)))
-        
-    #need to be normalized before putting into network
-    images = np.array(images) """
-    
-    assert 100000 == len(targets)
-    mean = images.mean()
-    std = images.std()
-    
-    transform_test = transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
-    ])
-
-    testset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
-    
-    num_points = 100000
-    if len(images) < num_points:
-        num_points = len(images)
-        
-    trainset = [(torch.FloatTensor((images[i]- mean)/std).unsqueeze(0), torch.tensor(targets[i])) for i in range(num_points) if targets[i] != -1] #also need to recheck if we need this
-    
-    print("Number of samples for student training: {}".format(len(trainset)))
-    
-    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    
-    
-    return train_loader, valid_loader, test_loader
-
 def get_MIX_student(batch_size, validation_size=0.2):
     num_workers = 4
     path = LOG_DIR_DATA + "/MIX.npy"
@@ -1315,40 +943,6 @@ def get_MIX_student(batch_size, validation_size=0.2):
     
     
     return train_loader, valid_loader, test_loader
-
-def get_MNIST_FMNIST_student(batch_size, validation_size=0.2):
-    num_workers = 4
-    
-    transform_train=transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
-    ])
-
-    trainset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
-    
-    transform_test = transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.2860,), (0.3530,)) # normalize inputs
-    ])
-
-    
-    testset = torchvision.datasets.FashionMNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
-    
-    
-    target_path = LOG_DIR_DATA + "/teacher_labels/MNIST_FMNIST.npy"
-    
-    teacher_labels = np.load(target_path)
-    
-    partition_train = [[trainset[i][0], torch.tensor(teacher_labels[i])] for i in range(len(teacher_labels)) if teacher_labels[i]!= -1] #remove all datapoints, where we have no answer from the teacher ensemble
-    
-    
-    
-    train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    valid_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
-    
-    return train_loader, valid_loader, test_loader
-    
 
 def get_dead_leaves_CIFAR10_student(batch_size, validation_size=0.2):
     
@@ -1444,7 +1038,6 @@ def get_stylegan_CIFAR10_student(batch_size, validation_size=0.2):
     test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     
     return train_loader, valid_loader, test_loader
-
 
 def prepare_datasets_for_DIET_PATE():
 
