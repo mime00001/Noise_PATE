@@ -1,11 +1,8 @@
 import pate_main, pate_data
-import experiments
 import student
 from utils import teachers, misc
 import conventions
 import datasets, models
-import distill_gaussian
-import compute_FID
 import time
 import os
 import pickle
@@ -16,9 +13,9 @@ import torch, torchvision
 import torchvision.transforms as transforms
 from PIL import Image, ImageOps
 
-LOG_DIR_DATA = "/storage3/michel/data"
-LOG_DIR = "/storage3/michel"
-LOG_DIR_MODEL = "/storage3/michel"
+LOG_DIR_DATA = "/data"
+LOG_DIR = ""
+LOG_DIR_MODEL = ""
 
 np.set_printoptions(suppress=True)
 
@@ -485,141 +482,6 @@ def plot_datasets(dataset_name, num=8, spacing=5):
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     combined_image.save(save_path)  
 
-
-def compare_FID_scores(length=500):
-    
-    data_names = ["MNIST pub", "noise_MNIST", "FMNIST", "dead_leaves-mixed", "stylegan-oriented", "FractalDB", "Shaders21k"]
-    
-    
-    base_data = compute_FID.prep_MNIST_train(length)
-    
-    fid_scores = {}
-    
-    for name in data_names:
-        if name == "FMNIST":
-            compare_data = compute_FID.prep_FMNIST_test(length)
-        elif name == "MNIST pub":
-            compare_data = compute_FID.prep_MNIST_test(length)
-        else:
-            compare_data = compute_FID.prep_dataset(name, length)
-        fid_score = compute_FID.calculate_FID(base_data.to("cuda"), compare_data.to("cuda"))
-        fid_scores[name] = fid_score
-        
-    print(fid_scores)
-    with open("fid_scores.pkl", "wb") as f:
-        pickle.dump(fid_scores, f)
-
-def compare_FID_scores_SVHN(length=500):
-    
-    data_names = ["SVHN pub", "noise_SVHN", "dead_leaves-mixed_SVHN", "stylegan_SVHN", "Shaders21k_SVHN"]
-    
-    
-    base_data = compute_FID.prep_SVHN_train(length)
-    
-    fid_scores = {}
-    
-    for name in data_names:
-        if name == "SVHN pub":
-            compare_data = compute_FID.prep_SVHN_test(length)
-        else:
-            compare_data = compute_FID.prep_RGB_dataset(name, length)
-        print(f"Currently comparing: {name}")
-        fid_score = compute_FID.calculate_FID(base_data.to("cuda"), compare_data.to("cuda"))
-        fid_scores[name] = fid_score
-        
-    print(fid_scores)
-    with open("results/fid_scores_SVHN.pkl", "wb") as f:
-        pickle.dump(fid_scores, f)
-
-   
-def compare_KID_scores(length=500):
-    
-    data_names = ["MNIST pub", "noise_MNIST", "FMNIST", "dead_leaves-mixed", "stylegan-oriented", "FractalDB", "Shaders21k"]
-    
-    
-    base_data = compute_FID.prep_MNIST_train(length)
-    
-    kid_scores = {}
-    
-    for name in data_names:
-        if name == "FMNIST":
-            compare_data = compute_FID.prep_FMNIST_test(length)
-        elif name == "MNIST pub":
-            compare_data = compute_FID.prep_MNIST_test(length)
-        else:
-            compare_data = compute_FID.prep_dataset(name, length)
-        kid_score = compute_FID.calculate_KID(base_data.to("cuda"), compare_data.to("cuda"))
-        kid_scores[name] = kid_score
-        
-    print(kid_scores)
-    with open("results/kid_scores.pkl", "wb") as f:
-        pickle.dump(kid_scores, f)
-        
-def compare_KID_scores_SVHN(length=500):
-    
-    data_names = ["SVHN pub", "noise_SVHN", "dead_leaves-mixed_SVHN", "stylegan_SVHN", "Shaders21k_SVHN"]
-    
-    
-    base_data = compute_FID.prep_SVHN_train(length)
-    
-    kid_scores = {}
-    
-    for name in data_names:
-        if name == "SVHN pub":
-            compare_data = compute_FID.prep_SVHN_test(length)
-        else:
-            compare_data = compute_FID.prep_RGB_dataset(name, length)
-        print(f"Currently comparing: {name}")
-        kid_score = compute_FID.calculate_KID(base_data.to("cuda"), compare_data.to("cuda"))
-        kid_scores[name] = kid_score
-        
-    print(kid_scores)
-    with open("results/kid_scores_SVHN.pkl", "wb") as f:
-        pickle.dump(kid_scores, f)
-        
-def compare_FID_scores_FMNIST(length=500):
-    data_names = ["FMNIST pub", "noise_MNIST", "MNIST", "dead_leaves-mixed", "stylegan-oriented", "FractalDB", "Shaders21k"]
-    
-    
-    base_data = compute_FID.prep_FMNIST_train(length)
-    
-    fid_scores = {}
-    
-    for name in data_names:
-        if name == "FMNIST pub":
-            compare_data = compute_FID.prep_FMNIST_test(length)
-        elif name == "MNIST":
-            compare_data = compute_FID.prep_MNIST_train(length)
-        else:
-            compare_data = compute_FID.prep_dataset(name, length)
-        fid_score = compute_FID.calculate_FID(base_data.to("cuda"), compare_data.to("cuda"))
-        fid_scores[name] = fid_score
-        
-    print(fid_scores)
-    with open("results/fid_scores_FMNIST.pkl", "wb") as f:
-        pickle.dump(fid_scores, f)
-        
-def compare_KID_scores_FMNIST(length=500):
-    
-    data_names = ["FMNIST pub", "noise_MNIST", "MNIST", "dead_leaves-mixed", "stylegan-oriented", "FractalDB", "Shaders21k"]
-    
-    base_data = compute_FID.prep_FMNIST_train(length)
-    
-    kid_scores = {}
-    
-    for name in data_names:
-        if name == "FMNIST pub":
-            compare_data = compute_FID.prep_FMNIST_test(length)
-        elif name == "MNIST":
-            compare_data = compute_FID.prep_MNIST_train(length)
-        else:
-            compare_data = compute_FID.prep_dataset(name, length)
-        kid_score = compute_FID.calculate_KID(base_data.to("cuda"), compare_data.to("cuda"))
-        kid_scores[name] = kid_score
-        
-    print(kid_scores)
-    with open("results/kid_scores_FMNIST.pkl", "wb") as f:
-        pickle.dump(kid_scores, f)
         
 def only_transfer_set_different_methods(target_dataset= "MNIST", transfer_dataset="stylegan"):
     
@@ -700,55 +562,3 @@ def only_transfer_set_different_methods(target_dataset= "MNIST", transfer_datase
         pickle.dump(results, f)
     
  
- 
-def timing_dataloaders(batch_size):
-    batch_size = batch_size
-    num_workers = 4
-    validation_size = 0.1
-    
-
-    transform_test = transforms.Compose([
-         transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
-    ])
-
-     #, transform=transform_train
-    testset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=False, download=True, transform=transform_test)
-    
-    end = int(len(testset)*(1-validation_size))
-    
-    partition_train = [testset[i] for i in range(end)]
-    partition_test = [testset[i] for i in range(end, len(testset))]
-    
-    train_loader = torch.utils.data.DataLoader(partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    valid_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    
-    return train_loader, valid_loader, test_loader
- 
-def time_inference():
-     
-    teacher_name = "teacher_MNIST_mnistresnet.model"
-    teacher_name += "_{}".format(1)
-    
-    teacher_path = os.path.join("/storage3/michel/OldPretrained_NW/SL_MNIST", teacher_name)
-    
-    teacher_nw = torch.load(teacher_path)
-    teacher_nw = teacher_nw.to("cuda")
-    
-    for batch_size in [1, 32]:
-        train_loader, _, _ = timing_dataloaders(batch_size=batch_size)
-        
-        all_times = []
-
-        for data, target in train_loader:
-            start_time = time.time()
-            data, target = data.to("cuda"), target.to("cuda")
-            output = teacher_nw(data)
-            end_time = time.time()
-            
-            elapsed = start_time - end_time
-            all_times.append(elapsed)
-            
-        print(f"Average time per batch_size {batch_size}: {np.mean(all_times)} +- {np.std(all_times)}")
-        

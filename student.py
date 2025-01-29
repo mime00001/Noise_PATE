@@ -17,11 +17,11 @@ from utils import misc
 
 #this code is taken from https://github.com/Piyush-555/GaussianDistillation/tree/main
 
-LOG_DIR_DATA = "/storage3/michel/data"
-LOG_DIR = "/storage3/michel"
-LOG_DIR_MODEL = "/storage3/michel"
+LOG_DIR_DATA = "/data"
+LOG_DIR = ""
+LOG_DIR_MODEL = ""
 
-def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device, label=True, test_loader=None):
+def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion, scheduler, device, label=True):
     xe = nn.CrossEntropyLoss()
     target_nw.train()
     train_loss = 0.0
@@ -55,20 +55,12 @@ def train_one_epoch(target_nw, train_loader, valid_loader, optimizer, criterion,
 
 
 
-def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim="Adam", loss="xe", label=False, test_loader=None):
-    if loss == "xe":
-        criterion = nn.CrossEntropyLoss()
-        label=True
-    elif loss == "misc":
-        criterion= misc.DistillationLoss()
-        label=False
-    elif loss == "softmax":
-        criterion = misc.SoftmaxDistillationLoss()
-        label=False
-    if optim=="SGD":    
-        optimizer = SGD(student_nw.parameters(), lr=lr, momentum=0.9, weight_decay=weight_decay)
-    elif optim=="Adam":
-        optimizer = Adam(student_nw.parameters(), lr=lr, weight_decay=weight_decay)
+def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, test_loader=None):
+    
+    criterion = nn.CrossEntropyLoss()
+    label=True
+
+    optimizer = Adam(student_nw.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer=optimizer,
         mode="min",
@@ -84,7 +76,7 @@ def train_student(student_nw, train_loader, valid_loader, n_epochs, lr, weight_d
     return [list(i) for i in zip(*metrics)]
 
 @misc.log_experiment
-def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', optimizer="Adam", loss="xe", label=False, **kwargs):
+def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='', optimizer="Adam", loss="xe", label=False, **kwargs):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(target_dataset)
     # override
@@ -114,7 +106,7 @@ def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weig
         experiment_config["inputs"],
         experiment_config["code_dim"]
     )).to(device)
-    metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=None, loss=loss, label=label)
+    metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer)
     
     ret = metrics[3][-1]
     
@@ -142,7 +134,7 @@ def util_train_student(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weig
 
 
 @misc.log_experiment
-def util_train_SSL_student(target_dataset, transfer_dataset, backbone_name, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', optimizer="Adam", loss="xe", label=False, **kwargs):
+def util_train_SSL_student(target_dataset, transfer_dataset, backbone_name, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='', optimizer="Adam", loss="xe", label=False, **kwargs):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(target_dataset)
     # override
@@ -242,7 +234,7 @@ def util_train_SSL_student(target_dataset, transfer_dataset, backbone_name, n_ep
     return ret
     
 @misc.log_experiment
-def util_train_student_same_init(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='/disk2/michel/', optimizer="Adam", **kwargs):
+def util_train_student_same_init(target_dataset, transfer_dataset, n_epochs, lr=1e-3, weight_decay=0, verbose=True, save=True, LOG_DIR='', optimizer="Adam", **kwargs):
     device = misc.get_device()
     experiment_config = conventions.resolve_dataset(target_dataset)
     # override
@@ -295,48 +287,3 @@ def util_train_student_same_init(target_dataset, transfer_dataset, n_epochs, lr=
     return ret
 
 
-def util_compute_student_AUC(target_dataset):
-    device = misc.get_device()
-    experiment_config = conventions.resolve_dataset(target_dataset)
-    # override
-
-    print('Experiment Configuration:')
-    print(experiment_config)
-
-    os.makedirs(LOG_DIR_DATA, exist_ok=True)
-    os.makedirs(LOG_DIR_MODEL + '/Pretrained_NW/{}'.format(target_dataset), exist_ok=True)
-    
-    
-    auc_score = 0
-    
-    _, _, target_loader = eval("datasets.get_{}_student({})".format(
-        target_dataset,
-        experiment_config["batch_size"]
-    ))
-    
-    model_name = conventions.resolve_student_name(experiment_config)
-    model_path = os.path.join(LOG_DIR_MODEL, 'Pretrained_NW/{}'.format(target_dataset), model_name)
-    model = torch.load(model_path, map_location=torch.device(device))
-    model.train()
-    model.to(device)
-
-    all_preds = []
-    all_labels = []
-
-    # Evaluate the model on the dataset
-    with torch.no_grad():
-        for data, labels in target_loader:
-            data = data.to(device)
-            labels = labels.to(device)
-
-            # Forward pass
-            outputs = model(data)
-
-            # Apply softmax to obtain probabilities (if not logits)
-            probs = softmax(outputs, dim=1)[:, 1]  # Assuming binary classification, take class 1 probability
-            all_preds.extend(probs.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
-
-    # Compute AUC
-    auc_score = roc_auc_score(all_labels, all_preds, multi_class="ovo")
-    return auc_score

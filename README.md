@@ -1,0 +1,11 @@
+# DIET-PATE: Knowledge Transfer in PATE without Public Data
+
+## Abstract
+The PATE algorithm is one of the canonical approaches to private machine learning, leveraging a private dataset to label a public dataset for knowledge transfer under differential privacy guarantees. However, its reliance on public data from the same distribution as the private data for the knowledge transfer poses a significant challenge, especially in medical or financial domains where such public data is usually unavailable. Recent advances have proposed using programmatically generated data as a substitute for public data in differentially private machine learning, opening new avenues for private knowledge transfer. In this work, we adapt the PATE framework to operate on programmatically generated data, removing the dependence on distribution-matched public data. The key to the success is to leverage the data-free knowledge distillation, which eliminates the shift in the distribution of hidden layer activations caused by feeding data from a different distribution than the training set to the ensemble of teacher models. We also demonstrate that the pretraining of teachers and the student on programmatically generated data increases substantially the overall performance by eliminating the need to learn generic features from scratch using the private data. Additionally, our method seamlessly extends to a distributed setting, where each teacher is trained by a different party. Through extensive benchmarking we show that our approach eliminates the reliance on public data and significantly outperforms the standard PATE method.
+
+
+## Preparation
+
+To run this code, you will need to generate the synthetic datasets Shaders21k (https://github.com/mbaradad/shaders21k/tree/main), FractalDB (https://github.com/hirokatsukataoka16/FractalDB-Pretrained-ResNet-PyTorch) StyleGAN-oriented and Dead Leaves (https://github.com/mbaradad/learning_with_noise).
+
+Further you will have to use the SimCLR framework (https://github.com/sthalles/SimCLR) to pretrain ResNet18 on the synthetic data. The changes to the SimCLR framework to fit to the task at hand are stored in SimCLR_changes.

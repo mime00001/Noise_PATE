@@ -74,7 +74,7 @@ def create_Gaussian_noise(dataset_name, size):
 
     Args:
         dataset_name (str): Name of the dataset for which we create noise, either MNIST or CIFAR10
-        size (int): Amount of the data to be created, i.e. 10000
+        size (int): Amount of the data to be created, e.g. 10000
     """
     
     np.random.seed(42)

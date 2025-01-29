@@ -15,8 +15,8 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
-LOG_DIR_DATA = "/storage3/michel/data"
-LOG_DIR = "/storage3/michel"
+LOG_DIR_DATA = "/data"
+LOG_DIR = ""
 #get the greedy teacher accuracy
 
 def query_one_less_teacher(teacher_id, nb_teachers, query_dataset, target_dataset, BN_trick, SSL):
@@ -49,12 +49,12 @@ def query_one_less_teacher(teacher_id, nb_teachers, query_dataset, target_datase
             print("querying teacher {}".format(i))
             teacher_name = "teacher_MNIST_mnistresnet.model"
             teacher_name += "_{}".format(i)
-            LOG_DIR = f'/storage3/michel/OldPretrained_NW/SL_'
+            LOG_DIR = f'/Pretrained_NW/SL_'
             
             if "noise_" in target_dataset:
                 target_dataset = target_dataset.replace("noise_", "")
             
-            teacher_path = os.path.join("/storage3/michel/OldPretrained_NW/SL_MNIST", teacher_name)
+            teacher_path = os.path.join("/Pretrained_NW/SL_MNIST", teacher_name)
             teacher_nw = torch.load(teacher_path)
             teacher_nw = teacher_nw.to(device)
             
@@ -249,7 +249,7 @@ def greedy_teacher_and_fair_teacher(nb_teachers, query_dataset, target_dataset, 
     teacher_name = "teacher_MNIST_mnistresnet.model"
     teacher_name += "_{}".format(teacher_id)
     
-    teacher_path = os.path.join("/storage3/michel/OldPretrained_NW/SL_MNIST", teacher_name)
+    teacher_path = os.path.join(LOG_DIR + "Pretrained_NW/SL_MNIST", teacher_name)
     
     teacher_nw = torch.load(teacher_path)
     teacher_nw = teacher_nw.to(device)
@@ -267,13 +267,13 @@ def greedy_teacher_and_fair_teacher(nb_teachers, query_dataset, target_dataset, 
     teacher_name = "teacher_MNIST_mnistresnet.model"
     teacher_name += "_{}".format(teacher_id)
     
-    teacher_path = os.path.join("/storage3/michel/OldPretrained_NW/SL_MNIST", teacher_name)
+    teacher_path = os.path.join(LOG_DIR + "Pretrained_NW/SL_MNIST", teacher_name)
     teacher_nw = torch.load(teacher_path)
     teacher_nw = teacher_nw.to(device)
     
     # train fair teacher
     metrics = teachers.train_teacher(teacher_nw=teacher_nw, train_loader=train_loader, valid_loader=test_loader, n_epochs=10, teacher_id=teacher_id, lr=1e-5,
-                                    weight_decay=0, verbose=True, save=False, LOG_DIR='/storage3/michel/',nb_teachers=nb_teachers, device="cuda")
+                                    weight_decay=0, verbose=True, save=False, LOG_DIR='',nb_teachers=nb_teachers, device="cuda")
     print(metrics)
     
     fair_teacher_acc = metrics[3][-1]

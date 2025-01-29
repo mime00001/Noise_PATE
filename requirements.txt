@@ -7,3 +7,7 @@ absl-py
 scipy
 pandas
 tensorflow
+medmnist
+torchmetrics
+pillow
+scikit-learn
