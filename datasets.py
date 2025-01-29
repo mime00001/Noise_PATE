@@ -539,7 +539,6 @@ def get_stylegan_CIFAR10_PATE(batch_size):
 
 
 #these datasets are for training the student, they need the teacher_labels saved in the folder /teacher_labels/ to work
-#
 
 
 def get_CIFAR10_student(batch_size, validation_size=0.2):

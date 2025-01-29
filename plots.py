@@ -119,7 +119,6 @@ def final_plot(num_reps=3, target_dataset ="MNIST",
                      "accuracies_with": accuracies_with_BN_trick, "accuracies_with_std": accuracies_with_BN_trick_std,
                      "num_answered_wo": num_answered_wo, "num_answered_with": num_answered_with}, f)
     
-    
 
 def final_plot_CIFAR(num_reps=3, target_dataset ="CIFAR10", 
             query_datasets = ["noise_CIFAR10", "dead_leaves_CIFAR10", "stylegan_CIFAR10", "Shaders21k_CIFAR10", "CIFAR10"],
@@ -228,7 +227,6 @@ def final_plot_CIFAR(num_reps=3, target_dataset ="CIFAR10",
     print(f"save at: {save_path}")
     
 
-
 def final_plot_TissueMNIST(num_reps=3, target_dataset ="TissueMNIST", 
             query_datasets = ["noise_MNIST", "dead_leaves", "FractalDB", "stylegan", "Shaders21k", "FMNIST", "TissueMNIST"],
             save_path="results/TissueMNIST_AUC_all_SSL.pkl", nb_teachers=250, student_ssl=True, teacher_ssl=True):
@@ -241,10 +239,6 @@ def final_plot_TissueMNIST(num_reps=3, target_dataset ="TissueMNIST",
     accuracies_with_BN_trick = {}
     accuracies_wo_BN_trick_std = {}
     accuracies_with_BN_trick_std = {}
-    auc_wo_BN_trick = {}
-    auc_with_BN_trick = {}
-    auc_wo_BN_trick_std = {}
-    auc_with_BN_trick_std = {}
     
     num_answered_wo = {}
     num_answered_with ={}
@@ -256,8 +250,6 @@ def final_plot_TissueMNIST(num_reps=3, target_dataset ="TissueMNIST",
         accuracies_with_BN_trick_std[ds] = [[] for e in epsilon_range]
         num_answered_wo[ds] = [[] for e in epsilon_range]
         num_answered_with[ds] = [[] for e in epsilon_range]
-        auc_wo_BN_trick[ds] = [[] for e in epsilon_range] 
-        auc_with_BN_trick[ds] = [[] for e in epsilon_range]
     
     
     #pate_data.create_Gaussian_noise(target_dataset, 60000)   
@@ -270,7 +262,6 @@ def final_plot_TissueMNIST(num_reps=3, target_dataset ="TissueMNIST",
         for i in range(num_reps):
             
             for i, eps in enumerate(epsilon_range): 
-                params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
                 if target_dataset == "TissueMNIST":
                     params = {"threshold": 170, "sigma_threshold": 100, "sigma_gnmax": 40, "epsilon": eps, "delta" : 1e-5}
                     
@@ -287,8 +278,6 @@ def final_plot_TissueMNIST(num_reps=3, target_dataset ="TissueMNIST",
                     
                 accuracies_wo_BN_trick[ds][i].append(final_acc)
                 num_answered_wo[ds][i].append(num_answered)
-                final_auc = student.util_compute_student_AUC(target_dataset=target_dataset)
-                auc_wo_BN_trick[ds][i].append(final_auc)
     
     for ds in query_datasets:
         vote_array = pate_data.query_teachers(target_dataset, ds, nb_teachers, True, SSL=teacher_ssl)
@@ -311,9 +300,7 @@ def final_plot_TissueMNIST(num_reps=3, target_dataset ="TissueMNIST",
                     final_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=ds ,n_epochs=50) 
                 accuracies_with_BN_trick[ds][i].append(final_acc)
                 num_answered_with[ds][i].append(num_answered)
-                
-                final_auc = student.util_compute_student_AUC(target_dataset=target_dataset)
-                auc_with_BN_trick[ds][i].append(final_auc)
+
                 
     print(f"Accuracies with BN trick: {accuracies_with_BN_trick}")
     print(f"Accuracies without BN trick: {accuracies_wo_BN_trick}")
@@ -326,10 +313,6 @@ def final_plot_TissueMNIST(num_reps=3, target_dataset ="TissueMNIST",
             accuracies_wo_BN_trick[ds][i] = np.mean(accuracies_wo_BN_trick[ds][i])
             num_answered_wo[ds][i] = np.mean(num_answered_wo[ds][i])
             num_answered_with[ds][i] = np.mean(num_answered_with[ds][i])
-            auc_wo_BN_trick[ds][i] = np.mean(auc_wo_BN_trick[ds][i])
-            auc_with_BN_trick[ds][i] = np.mean(auc_with_BN_trick[ds][i])
-            auc_wo_BN_trick_std[ds][i] = np.std(auc_wo_BN_trick[ds][i])
-            auc_with_BN_trick_std[ds][i] = np.std(auc_with_BN_trick[ds][i])
             
     
     #display them in the table as well
@@ -345,15 +328,8 @@ def final_plot_TissueMNIST(num_reps=3, target_dataset ="TissueMNIST",
     with open(save_path, "wb") as f:
         pickle.dump({"accuracies_wo": accuracies_wo_BN_trick, "accuracies_wo_std": accuracies_wo_BN_trick_std,
                      "accuracies_with": accuracies_with_BN_trick, "accuracies_with_std": accuracies_with_BN_trick_std,
-                     "num_answered_wo": num_answered_wo, "num_answered_with": num_answered_with, "auc_wo" : auc_wo_BN_trick,
-                     "auc_wo_std" : auc_wo_BN_trick_std, "auc_with": auc_with_BN_trick, "auc_with_std": auc_with_BN_trick_std}, f)
-    
-    
-
-
-    
-
-
+                     "num_answered_wo": num_answered_wo, "num_answered_with": num_answered_with}, f)
+   
 def plot_datasets(dataset_name, num=8, spacing=5):
     
     

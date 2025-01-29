@@ -81,8 +81,7 @@ def query_one_less_teacher(teacher_id, nb_teachers, query_dataset, target_datase
     np.save(path, labels, allow_pickle=True)
     
     return labels
-    
-    
+     
 def get_capc_dataloaders():
     batch_size = 128
     num_workers = 4
@@ -107,9 +106,7 @@ def get_capc_dataloaders():
     test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=False)
     
     return train_loader, valid_loader, test_loader
-
-
-    
+  
 def get_greedy_dataloaders(teacher_id, nb_teachers):
     
     transform_train = transform=transforms.Compose([
@@ -284,8 +281,7 @@ def greedy_teacher_and_fair_teacher(nb_teachers, query_dataset, target_dataset, 
     return greedy_teacher_acc, fair_teacher_acc
     
     #then fair teacher, i.e. split the data randomly by 200 and train teacher again on the data
-    
-    
+     
 def avg_teacher_accs():
     
     greedy_accs = []

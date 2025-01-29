@@ -65,8 +65,6 @@ def query(votes, threshold, sigma_threshold, sigma_gnmax, num_classes):
     # noise_threshold = np.random.normal(0., args.sigma_threshold,
     #                                    num_samples)
 
-
-
 def analyze_results(votes, max_num_query, dp_eps):
     print('max_num_query;', max_num_query)
     dp_eps_items = []
@@ -108,7 +106,6 @@ def analyze_results(votes, max_num_query, dp_eps):
         print(f'{gap};{mean_eps}')
 
     return gap_eps, gaps
-
 
 def analyze_multiclass_confident_gnmax(
         votes, threshold, sigma_threshold, sigma_gnmax, budget, delta, file, args=None):

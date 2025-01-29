@@ -2,9 +2,9 @@
 
 When the synthetic datasets are stored in their respective locations, you can pretrain a ResNet18 model, by executing the run.py file. E.g.:
 
-python run.py --dataset-name="dead_leaves" -data="/data" --epochs 75 --single_channel
+python run.py --dataset-name="dead_leaves" -data="/data" --epochs 50 --single_channel
 
-This train a ResNet18 model on the dead_leaves data stored in /data for 75 epochs.
+This train a ResNet18 model on the dead_leaves data stored in /data for 50 epochs.
 The following datasets work to train a backbone:
 stylegan, dead_leaves, shaders21k_grey, fractaldb, fmnist, shaders21k_rgb, dead_leaves_rgb, stylegan_rgb
 

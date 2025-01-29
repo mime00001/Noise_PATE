@@ -15,13 +15,17 @@ Finally in the diet_pate.py file execute the ```python datasets.prepare_datasets
 
 ## Executing DIET-PATE
 
-The simplest way to start with the experiments is to first perform a full training run which trains all the teachers and a first student model. This can also be used to test the implementation and see if the datasets are stored correctly and the datadirectories have the correct naming across all files.
+The simplest way to start with the experiments is to first perform a full training run which trains all the teachers and a first student model. This can also be used to test if the datasets are stored correctly and the data directories have the correct naming across all files.
 
 In the diet_pate.py file execute the full_run() function
 
-```python full_run(target_dataset="MNIST", transfer_dataset="noise_MNIST", backbone_name="stylegan", nb_teachers=200, SSL_teachers=True, train_teachers=True, compare=False, epsilon=5,  BN_trick=True) ```
+```python full_run(target_dataset="MNIST", transfer_dataset="MNIST", backbone_name="stylegan", nb_teachers=200, SSL_teachers=True, train_teachers=True, compare=False, epsilon=5,  BN_trick=True) ```
 
-You can then repeat the same for CIFAR10 by switching target_dataset and transfer_dataset to appropriate options. For CIFAR10 also use 50 teachers. 
+and 
+
+```python full_run(target_dataset="MNIST", transfer_dataset="MNIST", backbone_name=None, nb_teachers=200, SSL_teachers=False, train_teachers=True, compare=False, epsilon=5,  BN_trick=False) ```
+
+You can then repeat the same for CIFAR10 by switching target_dataset and transfer_dataset to CIFAR10. For CIFAR10 use 50 teachers and for TissueMNIST 250. 
 
 For the different methods, you will have to specify the variables as follows:
 
@@ -31,3 +35,8 @@ Pretraining: ```python backbone_name=stylegan, SSL_teachers=True, BN_trick=False
 DIET-PATE: ```python backbone_name=stylegan, SSL_teachers=True, BN_trick=True ```
 
 
+## Experimental results
+
+The file plots.py was used to generate the main results for the plots in the paper.
+
+The experiments for the CaPC results can be found in capc.py 
