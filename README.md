@@ -7,5 +7,17 @@ The PATE algorithm is one of the canonical approaches to private machine learnin
 ## Preparation
 
 To run this code, you will need to generate the synthetic datasets Shaders21k (https://github.com/mbaradad/shaders21k/tree/main), FractalDB (https://github.com/hirokatsukataoka16/FractalDB-Pretrained-ResNet-PyTorch) StyleGAN-oriented and Dead Leaves (https://github.com/mbaradad/learning_with_noise).
+They have to be stored in LOG_DIR_DATA, which you have to set manually. The data has to be stored in subfolders: "/shaders21k/", "/FractalDB/", "/stylegan-oriented/" and "/dead_leaves-mixed/" respectively.  
 
-Further you will have to use the SimCLR framework (https://github.com/sthalles/SimCLR) to pretrain ResNet18 on the synthetic data. The changes to the SimCLR framework to fit to the task at hand are stored in SimCLR_changes.
+Further you will have to use the SimCLR framework (https://github.com/sthalles/SimCLR) to pretrain ResNet18 on the synthetic data. The changes to the SimCLR framework to fit to the task at hand are stored in SimCLR_changes. Please consult the README.md located in the folder to start the backbone training. 
+
+Finally in the diet_pate.py file execute the ```python datasets.prepare_datasets_for_DIET_PATE() ``` function. This prepares all the data for the knowledge transfer.
+
+## Executing DIET-PATE
+
+The simplest way to start with the experiments is to first perform a full training run which trains all the teachers and a first student model. This can also be used to test the implementation and see if the datasets are stored correctly and the datadirectories have the correct naming across all files.
+
+In the diet_pate.py file execute the full_run() function
+
+```python full_run(target_dataset="MNIST", transfer_dataset="noise_MNIST", backbone_name="stylegan", nb_teachers=200, SSL_teachers=True, train_teachers=True, compare=False, epsilon=5) ```
+
