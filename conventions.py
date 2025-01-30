@@ -45,15 +45,6 @@ def resolve_dataset(dataset_name):
         experiment_config['channels'] = 1
         experiment_config['batch_size'] = 256
         experiment_config['BN_trick'] = True
-        
-    if dataset_name=='SVHN':
-        experiment_config['code_dim'] = 10
-        experiment_config['model_teacher'] = "resnet18"
-        experiment_config['model_student'] = "resnet18"
-        experiment_config['inputs'] = 3
-        experiment_config['channels'] = 3
-        experiment_config['batch_size'] = 256
-        experiment_config['BN_trick'] = True
     
     return experiment_config
 

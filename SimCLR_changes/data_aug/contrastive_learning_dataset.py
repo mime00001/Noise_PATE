@@ -37,7 +37,7 @@ class ContrastiveLearningDataset:
         return data_transforms
 
     def get_dataset(self, name, n_views):
-        print(os.path.exists("/storage3/michel"))
+        
         valid_datasets = {'cifar10': lambda: datasets.CIFAR10(self.root_folder, train=True,
                                                               transform=ContrastiveLearningViewGenerator(
                                                                   self.get_simclr_pipeline_transform(32),

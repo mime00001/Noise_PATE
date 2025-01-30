@@ -25,13 +25,18 @@ import torch.nn as nn
 import pandas as pd
 
 
-LOG_DIR_DATA = "/data"
+LOG_DIR_DATA = "data"
 LOG_DIR = ""
 LOG_DIR_MODEL = ""
 
 
-def full_run(target_dataset="MNIST", transfer_dataset="noise_MNIST", backbone_name="stylegan", nb_teachers=200, params=None, SSL_teachers=True, train_teachers=True, epsilon=10, BN_trick=True):
+def full_run(target_dataset="MNIST", transfer_dataset="MNIST", backbone_name="stylegan", nb_teachers=200, params=None, SSL_teachers=True, train_teachers=True, epsilon=10, BN_trick=True):
     
+    '''
+    Perfroms a full run of training the teachers and transfering knowledge to the student with the specified target and transfer set
+    as well as the teachers and student either being pretrained or trained from scratch.
+    '''
+
     
     if target_dataset == "TissueMNIST":
         num_classes = 8
@@ -42,7 +47,7 @@ def full_run(target_dataset="MNIST", transfer_dataset="noise_MNIST", backbone_na
         if target_dataset =="MNIST": 
             params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset =="CIFAR10": 
-            params = {"threshold": 80, "sigma_threshold": 50, "sigma_gnmax": 20, "epsilon": epsilon, "delta" : 1e-5}
+            params = {"threshold": 50, "sigma_threshold": 30, "sigma_gnmax": 15, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset == "TissueMNIST":
             params = {"threshold": 170, "sigma_threshold": 100, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
     
@@ -63,8 +68,11 @@ def full_run(target_dataset="MNIST", transfer_dataset="noise_MNIST", backbone_na
     noise_votes = pate_main.inference_pate(vote_array=noise_vote_array, threshold=params["threshold"], sigma_threshold=params["sigma_threshold"], sigma_gnmax=params["sigma_gnmax"], epsilon=params["epsilon"], delta=params["delta"], num_classes=num_classes, savepath=noise_label_path) 
     
     
-    #then train the student on Gaussian noise    
-    transfer_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params)
+    #then train the student on Gaussian noise
+    if backbone_name:
+        transfer_acc = student.util_train_SSL_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, backbone_name=backbone_name, n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params)
+    else:
+        transfer_acc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params)
     
     print(f"Accuracy with transfer dataset: {transfer_acc}")
 
@@ -76,18 +84,15 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
     
     '''
 
-
-
     if not params:
         if target_dataset =="MNIST": 
             params = {"threshold": 150, "sigma_threshold": 120, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset =="CIFAR10": 
-            params = {"threshold": 80, "sigma_threshold": 50, "sigma_gnmax": 20, "epsilon": epsilon, "delta" : 1e-5}
+            params = {"threshold": 50, "sigma_threshold": 30, "sigma_gnmax": 15, "epsilon": epsilon, "delta" : 1e-5}
         elif target_dataset == "TissueMNIST":
             params = {"threshold": 170, "sigma_threshold": 100, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
     
     noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick, SSL=True)
-    noise_vote_array = np.load(LOG_DIR_DATA + "/vote_array/{}.npy".format(transfer_dataset))
     noise_vote_array = noise_vote_array.T
     
     #then perform inference pate
@@ -100,7 +105,7 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
     if backbone_name:
         finalacc = student.util_train_SSL_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset,backbone_name=backbone_name, n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params)
     else:
-        finalacc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=30, lr=0.001, optimizer="Adam", kwargs=params)
+        finalacc = student.util_train_student(target_dataset=target_dataset, transfer_dataset=transfer_dataset, n_epochs=50, lr=0.001, optimizer="Adam", kwargs=params)
     return finalacc, num_answered
     
 

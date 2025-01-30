@@ -17,7 +17,7 @@ from utils import misc
 
 #this code is taken from https://github.com/Piyush-555/GaussianDistillation/tree/main
 
-LOG_DIR_DATA = "/data"
+LOG_DIR_DATA = "data"
 LOG_DIR = ""
 LOG_DIR_MODEL = ""
 
@@ -201,10 +201,10 @@ def util_train_SSL_student(target_dataset, transfer_dataset, backbone_name, n_ep
 
         log = model.load_state_dict(state_dict, strict=False)
         assert log.missing_keys == ['fc.weight', 'fc.bias']
-        #only freeze if not svhn
+
         for name, param in model.named_parameters():
-                if name not in ['fc.weight', 'fc.bias']:
-                            param.requires_grad = False
+            if name not in ['fc.weight', 'fc.bias']:
+                        param.requires_grad = False
 
     student_model = model.to(device)
     metrics = train_student(student_model, transfer_loader, target_loader, n_epochs, lr, weight_decay, verbose, device, save, LOG_DIR, optim=optimizer, test_loader=None, loss=loss, label=label)

@@ -19,7 +19,7 @@ from medmnist import TissueMNIST
 
 import pate_data
 
-LOG_DIR_DATA = "/data"
+LOG_DIR_DATA = "data"
 LOG_DIR = ""
 LOG_DIR_MODEL = ""
 

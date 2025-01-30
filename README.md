@@ -6,6 +6,12 @@ The PATE algorithm is one of the canonical approaches to private machine learnin
 
 ## Preparation
 
+### Installing requirements
+
+The code was run in python 3.12.4, the requirements can be installed with ```cmd pip install -r requirements.txt```
+
+### Setting up the data and models
+
 To run this code, you will need to generate the synthetic datasets Shaders21k (https://github.com/mbaradad/shaders21k/tree/main), FractalDB (https://github.com/hirokatsukataoka16/FractalDB-Pretrained-ResNet-PyTorch) StyleGAN-oriented and Dead Leaves (https://github.com/mbaradad/learning_with_noise).
 They have to be stored in LOG_DIR_DATA, which you have to set manually. The data has to be stored in subfolders: "/shaders21k/", "/FractalDB/", "/stylegan-oriented/" and "/dead_leaves-mixed/" respectively.  
 
