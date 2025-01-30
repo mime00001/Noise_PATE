@@ -37,6 +37,11 @@ def full_run(target_dataset="MNIST", transfer_dataset="MNIST", backbone_name="st
     as well as the teachers and student either being pretrained or trained from scratch.
     '''
 
+    if backbone_name:
+        ssl = True
+    else:
+        ssl = False
+
     
     if target_dataset == "TissueMNIST":
         num_classes = 8
@@ -59,8 +64,8 @@ def full_run(target_dataset="MNIST", transfer_dataset="MNIST", backbone_name="st
             teachers.util_train_teachers_same_init(dataset_name=target_dataset, n_epochs=50, nb_teachers=nb_teachers, initialize=True) #need to change back to True
     
 
-    #then get the noisy labels for the noise_MNIST
-    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick) 
+    #then get the noisy labels for the transfer dataset
+    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick, SSL=ssl) 
     noise_vote_array = noise_vote_array.T
     
     #then perform inference pate
@@ -83,6 +88,10 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
     Target dataset is the dataset we want to transfer knowledge about. Transfer dataset is the dataset we use to transfer the knowledge
     
     '''
+    if backbone_name:
+        ssl = True
+    else:
+        ssl = False
 
     if not params:
         if target_dataset =="MNIST": 
@@ -92,7 +101,7 @@ def only_transfer_set(target_dataset="MNIST", transfer_dataset="noise_MNIST", nb
         elif target_dataset == "TissueMNIST":
             params = {"threshold": 170, "sigma_threshold": 100, "sigma_gnmax": 40, "epsilon": epsilon, "delta" : 1e-5}
     
-    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick, SSL=True)
+    noise_vote_array = pate_data.query_teachers(target_dataset=target_dataset, query_dataset=transfer_dataset, nb_teachers=nb_teachers, BN_trick=BN_trick, SSL=ssl)
     noise_vote_array = noise_vote_array.T
     
     #then perform inference pate
