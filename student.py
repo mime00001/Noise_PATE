@@ -7,8 +7,6 @@ import torchvision
 import torch.nn as nn
 from torch.optim import Adam, SGD
 import torch.nn.functional as F
-from sklearn.metrics import roc_auc_score
-from torch.nn.functional import softmax
 
 import models
 import datasets
