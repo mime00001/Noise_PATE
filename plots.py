@@ -28,7 +28,7 @@ def final_plot(num_reps=3, target_dataset ="MNIST",
     np.set_printoptions(suppress=True)
 
 
-    epsilon_range = [5]#[1, 5, 10, 20]
+    epsilon_range = [6]#[1, 5, 10, 20]
     
     accuracies_wo_BN_trick = {}
     accuracies_with_BN_trick = {}

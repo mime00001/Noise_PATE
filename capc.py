@@ -108,22 +108,6 @@ def get_capc_dataloaders():
   
 def get_greedy_dataloaders(teacher_id, nb_teachers):
     
-    transform_train = transform=transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
-    ])
-
-
-    trainset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
-
-    batch_len = int(len(trainset) / nb_teachers)
-    
-    start = teacher_id * batch_len
-    end = (teacher_id+1) * batch_len
-        
-    old_partition_train = [trainset[i] for i in range(start, end)]
-    
-    
     
     batch_size = 256
     num_workers = 4
@@ -152,32 +136,18 @@ def get_greedy_dataloaders(teacher_id, nb_teachers):
 
     accuracy = accuracy/len(greedy_partition_train)
     
-    augmented_partition_train = ConcatDataset([greedy_partition_train, old_partition_train])
+    
     
     print(f"Num samples for the greedy teacher: {len(greedy_partition_train)}")
     print(f"Accuracy for the greedy teacher: {accuracy}")
     
-    train_loader = torch.utils.data.DataLoader(augmented_partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(greedy_partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     valid_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     
     return train_loader, valid_loader, test_loader
 
 def get_fair_dataloaders(teacher_id, nb_teachers):
-    transform_train = transform=transforms.Compose([
-        transforms.ToTensor(), # first, convert image to PyTorch tensor
-        transforms.Normalize((0.1307,), (0.3081,)) # normalize inputs
-    ])
-
-
-    trainset = torchvision.datasets.MNIST(root=LOG_DIR_DATA, train=True, download=True, transform=transform_train) #, transform=transform_train
-
-    batch_len = int(len(trainset) / nb_teachers)
-    
-    start = teacher_id * batch_len
-    end = (teacher_id+1) * batch_len
-        
-    old_partition_train = [trainset[i] for i in range(start, end)]
     
     
     batch_size = 256
@@ -214,12 +184,11 @@ def get_fair_dataloaders(teacher_id, nb_teachers):
 
     accuracy = accuracy/len(partition_train)
     
-    augmented_partition_train = ConcatDataset([fair_partition_train, old_partition_train])
-    
-    print(f"Num samples for the fair teacher: {len(augmented_partition_train)}")
+
+    print(f"Num samples for the fair teacher: {len(fair_partition_train)}")
     print(f"Accuracy for the fair teacher: {accuracy}")
     
-    train_loader = torch.utils.data.DataLoader(augmented_partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(fair_partition_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     valid_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     test_loader = torch.utils.data.DataLoader(partition_test, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     
@@ -258,13 +227,15 @@ def greedy_teacher_and_fair_teacher(nb_teachers, query_dataset, target_dataset, 
     if target_dataset == "TissueMNIST":
         train_loader, _, test_loader = get_TissueMNIST_greedy_dataloaders(teacher_id=teacher_id, nb_teachers=nb_teachers)
     
+    teacher_name = conventions.resolve_teacher_name(experiment_config)
+    teacher_name += f"_{teacher_id}"
 
-    teacher_path = os.path.join(LOG_DIR, f"SL_Pretrained_NW/{target_dataset}/init_model")
+    teacher_path = os.path.join(LOG_DIR, f"SL_Pretrained_NW/{target_dataset}/{teacher_name}")
     
     teacher_nw = torch.load(teacher_path)
     teacher_nw = teacher_nw.to(device)
 
-    metrics = teachers.train_teacher(teacher_nw=teacher_nw, train_loader=train_loader, valid_loader=test_loader, n_epochs=50, teacher_id=teacher_id, lr=1e-3, 
+    metrics = teachers.train_teacher(teacher_nw=teacher_nw, train_loader=train_loader, valid_loader=test_loader, n_epochs=5, teacher_id=teacher_id, lr=1e-4, 
                                      weight_decay=0, verbose=True, save=False, LOG_DIR='', nb_teachers=nb_teachers, device="cuda")
     print(metrics)
     
@@ -281,12 +252,15 @@ def greedy_teacher_and_fair_teacher(nb_teachers, query_dataset, target_dataset, 
 
 
 
-    teacher_path = os.path.join(LOG_DIR, f"/SL_Pretrained_NW/{target_dataset}/init_model")
+    teacher_name = conventions.resolve_teacher_name(experiment_config)
+    teacher_name += f"_{teacher_id}"
+
+    teacher_path = os.path.join(LOG_DIR, f"SL_Pretrained_NW/{target_dataset}/{teacher_name}")
     teacher_nw = torch.load(teacher_path)
     teacher_nw = teacher_nw.to(device)
     
     # train fair teacher
-    metrics = teachers.train_teacher(teacher_nw=teacher_nw, train_loader=train_loader, valid_loader=test_loader, n_epochs=50, teacher_id=teacher_id, lr=1e-3,
+    metrics = teachers.train_teacher(teacher_nw=teacher_nw, train_loader=train_loader, valid_loader=test_loader, n_epochs=5, teacher_id=teacher_id, lr=1e-4,
                                     weight_decay=0, verbose=True, save=False, LOG_DIR='',nb_teachers=nb_teachers, device="cuda")
     print(metrics)
     
